@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // The whole site is database-driven and rendered per-request.
+  cacheComponents: false,
   turbopack: {
     rules: {
       "*.css": {

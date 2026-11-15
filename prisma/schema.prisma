@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id               String   @id @default(cuid())
+  title            String
+  slug             String   @unique
+  category         String   @default("General")
+  status           String   @default("COMPLETED") // COMPLETED | ONGOING | EXPERIMENTAL
+  shortDescription String   @default("")
+  fullDescription  String   @default("")
+  problemStatement String   @default("")
+  objectives       String   @default("[]") // JSON string[]
+  features         String   @default("[]") // JSON string[]
+  technologies     String   @default("[]") // JSON string[]
+  architecture     String   @default("")
+  challenges       String   @default("[]") // JSON {challenge, solution}[]
+  contribution     String   @default("")
+  githubUrl        String?
+  liveDemoUrl      String?
+  screenshots      String   @default("[]") // JSON string[] of URLs
+  demoVideo        String?
+  documentation    String   @default("")
+  published        Boolean  @default(false)
+  displayOrder     Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  views ProjectView[]
+}
+
+model Profile {
+  id                 String   @id @default("profile")
+  introduction       String   @default("")
+  education          String   @default("")
+  skills             String   @default("[]") // JSON {group, items[]}[]
+  experience         String   @default("")
+  achievements       String   @default("")
+  interests          String   @default("")
+  socialLinks        String   @default("[]") // JSON {label, url}[]
+  contactInformation String   @default("")
+  updatedAt          DateTime @updatedAt
+}
+
+model KnowledgeDocument {
+  id          String   @id @default(cuid())
+  sourceType  String // "project" | "profile"
+  sourceId    String
+  section     String   @default("general")
+  content     String
+  embedding   String? // JSON number[] (null until embedded)
+  contentHash String   @default("")
+  updatedAt   DateTime @updatedAt
+
+  @@index([sourceType, sourceId])
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  sessionId String    @unique
+  createdAt DateTime  @default(now())
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String // "user" | "assistant"
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+model ProjectView {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model IndexState {
+  id            String    @id @default("index")
+  state         String    @default("idle") // idle | indexing | error
+  message       String    @default("")
+  embeddingMode String    @default("lexical") // lexical | semantic
+  docCount      Int       @default(0)
+  lastIndexedAt DateTime?
+}
