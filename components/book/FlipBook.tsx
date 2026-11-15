@@ -113,9 +113,17 @@ export default function FlipBook({ projects, profile, onProjectViewed, jumpRef }
           width={550}
           height={726}
           size="stretch"
-          minWidth={560}
+          // minWidth/minHeight are a hard floor react-pageflip will not
+          // shrink below in "stretch" mode, even if that means overflowing
+          // its container — which is exactly what happened on short
+          // viewports once .book-depth's own (viewport-height-aware) size
+          // dropped under the old 560/420 floor: the book rendered at its
+          // minimum (1120x739) regardless, got clipped by overflow-hidden,
+          // and the right page appeared cut off. Set low enough that
+          // .book-depth's own sizing is always the real constraint.
+          minWidth={240}
           maxWidth={1160}
-          minHeight={420}
+          minHeight={317}
           maxHeight={840}
           showCover={false}
           usePortrait={false}
