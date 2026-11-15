@@ -92,7 +92,22 @@ export default function FlipBook({ projects, profile, onProjectViewed, jumpRef }
 
   return (
     <div className="flex w-full flex-col items-center">
-      <div className="book-depth relative w-[min(94vw,1160px)]" style={{ aspectRatio: "2 / 1.32" }}>
+      <div
+        className="book-depth relative overflow-hidden"
+        style={{
+          // Explicit width AND height, not `aspectRatio`: aspect-ratio is only
+          // a *preference* for an empty box — react-pageflip's own rendered
+          // content can still force this box taller once it doesn't match,
+          // which is exactly what outgrew short viewports and forced a page
+          // scroll. Both formulas below independently pick from the same
+          // three (width, height) pairs — (94vw, 94vw*0.66), (1160px,
+          // 1160px*0.66), and the height-budget pair itself — so whichever
+          // branch wins always keeps the 2:1.32 ratio and never exceeds the
+          // viewport height budget.
+          width: "min(94vw, 1160px, calc((100dvh - 144px) * 2 / 1.32))",
+          height: "min(62.04vw, 765.6px, calc(100dvh - 144px))",
+        }}
+      >
         <FlipBookComponent
           ref={bookRef}
           width={550}

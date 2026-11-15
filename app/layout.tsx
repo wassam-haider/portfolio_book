@@ -44,9 +44,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      {/* suppressHydrationWarning: some browser extensions (e.g. accessibility/
+          recording tools) inject attributes like data-scribe-recorder-ready
+          onto <html> before React hydrates, which would otherwise log a
+          harmless hydration warning that has nothing to do with our markup. */}
       <body
         className={`${cinzel.variable} ${cormorant.variable} ${fellEnglish.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>

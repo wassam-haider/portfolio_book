@@ -21,7 +21,7 @@ const MOTES = [
 
 export default function DeskScene({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-[var(--walnut-deep)]">
+    <div className="relative h-dvh overflow-hidden bg-[var(--walnut-deep)]">
       {/* back wall: deep vignette */}
       <div
         aria-hidden
@@ -109,7 +109,7 @@ export default function DeskScene({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* content */}
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 h-full">{children}</div>
 
       {/* overall vignette */}
       <div

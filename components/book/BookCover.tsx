@@ -15,7 +15,7 @@ export default function BookCover({
   onOpen: () => void;
 }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-10">
+    <div className="flex h-full flex-col items-center justify-center px-4 py-6">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -39,13 +39,21 @@ export default function BookCover({
           onClick={onOpen}
           disabled={opening}
           aria-label="Open the Archives"
-          className="texture-leather group relative block w-[min(86vw,420px)] cursor-pointer rounded-r-md rounded-l-sm px-7 py-10 text-center sm:px-10 sm:py-14"
+          className="texture-leather group relative block cursor-pointer overflow-hidden rounded-r-md rounded-l-sm px-7 py-10 text-center sm:px-10 sm:py-14"
           style={{
+            // Explicit width AND height, not `aspectRatio`: aspect-ratio is
+            // only a *preference* for an empty box — this button's own text
+            // content can still force it taller once it doesn't fit, which
+            // is exactly what outgrew short viewports and forced a page
+            // scroll. Both formulas below independently pick from the same
+            // three (width, height) pairs, so whichever branch wins always
+            // keeps the 3:4.1 ratio and never exceeds the height budget.
+            width: "min(86vw, 420px, calc((100dvh - 140px) * 3 / 4.1))",
+            height: "min(117.54vw, 574.03px, calc(100dvh - 140px))",
             transformOrigin: "left center",
             transformStyle: "preserve-3d",
             boxShadow:
               "inset 0 0 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(180,154,98,0.25), 0 18px 50px rgba(0,0,0,0.7)",
-            aspectRatio: "3 / 4.1",
           }}
           animate={opening ? { rotateY: -112, opacity: 0.2 } : { rotateY: 0, opacity: 1 }}
           transition={{ duration: 1.1, ease: [0.645, 0.045, 0.355, 1] }}

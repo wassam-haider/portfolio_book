@@ -65,11 +65,12 @@ export default function ArchiveExperience({
     <DeskScene>
       <AnimatePresence mode="wait">
         {stage !== "open" ? (
-          <motion.div key="cover" exit={{ opacity: 0 }} transition={{ duration: 0.45 }}>
+          <motion.div className="h-full" key="cover" exit={{ opacity: 0 }} transition={{ duration: 0.45 }}>
             <BookCover opening={stage === "opening"} onOpen={openBook} />
           </motion.div>
         ) : (
           <motion.div
+            className="h-full"
             key="book"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -83,7 +84,7 @@ export default function ArchiveExperience({
                 jumpRef={jumpRef}
               />
             ) : (
-              <div className="flex min-h-dvh items-center justify-center px-4 py-10">
+              <div className="flex h-full items-center justify-center px-4 py-6">
                 <FlipBook
                   projects={projects}
                   profile={profile}
