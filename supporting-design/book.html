@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Architect's Grimoire — 3D Interactive Developer Archive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --gold-primary: #d4af37;
+      --gold-muted: #b08d57;
+      --walnut-deep: #140d09;
+      --parchment-bg: #efe3c8;
+      --ink-dark: #23170d;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background-color: #0d0907;
+      color: #f3e8d2;
+    }
+
+    /* Atmospheric Wizard Study Background */
+    .study-backdrop {
+      background:
+        radial-gradient(circle at 50% 45%, rgba(68, 43, 24, 0.42) 0%, rgba(20, 13, 9, 0.92) 55%, #080504 100%);
+      transition: opacity 0.6s ease;
+    }
+
+    /* Studio Transparent Checkerboard Mode */
+    .studio-backdrop {
+      background-color: #161618;
+      background-image:
+        linear-gradient(45deg, #1f1f23 25%, transparent 25%),
+        linear-gradient(-45deg, #1f1f23 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1f1f23 75%),
+        linear-gradient(-45deg, transparent 75%, #1f1f23 75%);
+      background-size: 28px 28px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0;
+    }
+
+    .font-cinzel {
+      font-family: 'Cinzel', serif;
+    }
+
+    .font-cinzel-dec {
+      font-family: 'Cinzel Decorative', serif;
+    }
+
+    .font-garamond {
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* Custom Scrollbar for Parchment Reader */
+    .parchment-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .parchment-scroll::-webkit-scrollbar-track {
+      background: rgba(139, 105, 60, 0.12);
+      border-radius: 999px;
+    }
+    .parchment-scroll::-webkit-scrollbar-thumb {
+      background: rgba(120, 84, 38, 0.45);
+      border-radius: 999px;
+    }
+
+    /* Illuminated Parchment Overlay Modal */
+    .parchment-sheet {
+      background:
+        radial-gradient(ellipse at center, rgba(247, 238, 216, 0.96) 0%, rgba(232, 214, 178, 0.97) 68%, rgba(201, 174, 126, 0.98) 100%);
+      box-shadow:
+        0 25px 65px rgba(0, 0, 0, 0.85),
+        inset 0 0 60px rgba(126, 86, 38, 0.35),
+        0 0 0 2px #8c6932,
+        0 0 0 6px #2b1a10,
+        0 0 0 8px #b08d57;
+    }
+
+    .gold-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(176, 141, 87, 0.75), transparent);
+    }
+
+    .ink-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(84, 54, 24, 0.45), transparent);
+    }
+
+    .glass-hud {
+      background: rgba(18, 12, 9, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(197, 160, 89, 0.28);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+    }
+
+    .arcane-btn {
+      background: linear-gradient(180deg, rgba(58, 39, 24, 0.9) 0%, rgba(31, 20, 12, 0.95) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      color: #f2dfb3;
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 232, 175, 0.18);
+    }
+
+    .arcane-btn:hover {
+      border-color: #e6c35c;
+      color: #fff6dc;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(212, 175, 55, 0.22), inset 0 1px 0 rgba(255, 232, 175, 0.32);
+    }
+
+    .arcane-btn:active {
+      transform: translateY(0px);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.75; filter: drop-shadow(0 0 6px rgba(245, 208, 118, 0.45)); }
+      50% { opacity: 1; filter: drop-shadow(0 0 14px rgba(245, 208, 118, 0.85)); }
+    }
+
+    .star-glow {
+      animation: pulseGlow 3.6s ease-in-out infinite;
+    }
+
+    /* Page turn transition */
+    .page-fade-enter {
+      animation: pageTurnIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes pageTurnIn {
+      0% {
+        opacity: 0;
+        transform: perspective(900px) rotateY(-8deg) scale(0.985);
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(900px) rotateY(0deg) scale(1);
+      }
+    }
+  </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden">
+
+  <!-- Background Layer (toggles between Wizard Study and Studio Checkerboard) -->
+  <div id="backdropLayer" class="fixed inset-0 study-backdrop pointer-events-none z-0"></div>
+
+  <!-- Subtle Radial Vignette -->
+  <div id="vignetteLayer" class="fixed inset-0 pointer-events-none z-0" style="background: radial-gradient(circle at center, transparent 48%, rgba(4, 2, 1, 0.82) 100%);"></div>
+
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvasContainer" class="fixed inset-0 z-10 cursor-grab active:cursor-grabbing"></div>
+
+  <!-- Top Minimal Header & Primary Action Bar -->
+  <header class="fixed top-0 left-0 right-0 z-30 flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-7 sm:py-4 pointer-events-none">
+    <!-- Brand / Artifact Identity -->
+    <div class="pointer-events-auto flex items-center gap-3 glass-hud px-4 py-2.5 rounded-2xl">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center border border-amber-400/40 bg-amber-950/50 text-amber-300 star-glow">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L14.6 9.4L23 12L14.6 14.6L12 23L9.4 14.6L1 12L9.4 9.4L12 1Z" />
+        </svg>
+      </div>
+      <div>
+        <div class="font-cinzel text-xs sm:text-sm font-bold tracking-[0.2em] text-amber-200 uppercase">Codex Ingeniarii</div>
+        <div class="text-[11px] text-amber-100/60 tracking-wide">Interactive 3D Portfolio Artifact</div>
+      </div>
+    </div>
+
+    <!-- Primary Controls -->
+    <div class="pointer-events-auto flex items-center gap-2 sm:gap-3">
+      <button id="toggleBookBtn" class="arcane-btn px-4 py-2.5 rounded-xl font-cinzel text-xs sm:text-sm font-semibold tracking-wider flex items-center gap-2">
+        <svg id="bookBtnIcon" class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        <span id="bookBtnLabel">Open Archive</span>
+      </button>
+
+      <button id="exportPngBtn" title="Download Transparent 3D PNG Render" class="arcane-btn px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+        <span class="hidden md:inline">Export PNG</span>
+      </button>
+
+      <button id="toggleStudioDrawerBtn" title="Customize Cover & Lighting" class="arcane-btn p-2.5 rounded-xl flex items-center justify-center">
+        <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Collapsible Studio & Cover Typography Customizer Drawer -->
+  <aside id="studioDrawer" class="fixed top-20 right-4 sm:right-7 z-30 w-80 max-w-[calc(100vw-2rem)] glass-hud rounded-2xl p-4 transition-all duration-300 opacity-0 translate-y-2 pointer-events-none">
+    <div class="flex items-center justify-between pb-2.5 border-b border-amber-500/20">
+      <span class="font-cinzel text-xs font-bold tracking-[0.18em] text-amber-300 uppercase">Artifact Studio</span>
+      <button id="closeDrawerBtn" class="text-amber-200/60 hover:text-amber-200 text-xs px-1.5 py-0.5 rounded">✕</button>
+    </div>
+
+    <div class="mt-3.5 space-y-3.5 text-xs">
+      <!-- Live Cover Typography Overlay Controls -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-amber-100/80 font-medium">Overlay Cover Typography</label>
+          <input type="checkbox" id="toggleOverlayText" checked class="accent-amber-500 w-3.5 h-3.5 rounded cursor-pointer" />
+        </div>
+        <p class="text-[11px] text-amber-100/50 mb-2">Rendered crisply above clean un-lettered embossed leather.</p>
+        <input id="coverTitleInput" type="text" value="ARCHIVES OF THE ARCHITECT" maxlength="32"
+          class="w-full bg-black/50 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-amber-100 font-cinzel text-xs tracking-wider focus:outline-none focus:border-amber-400 mb-2"
+          placeholder="Cover Title" />
+        <input id="coverSubtitleInput" type="text" value="SYSTEMS • RESEARCH • ARTIFACTS" maxlength="40"
+          class="w-full bg-black/50 border border-amber-500/30 rounded-lg px-2.5 py-1.5 text-amber-200/80 font-cinzel text-[11px] tracking-widest focus:outline-none focus:border-amber-400"
+          placeholder="Subtitle" />
+      </div>
+
+      <div class="gold-divider"></div>
+
+      <!-- Background Mode Toggle -->
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-amber-100/85 font-medium">Transparent Alpha Mode</div>
+          <div class="text-[11px] text-amber-100/50">Isolate book for transparent PNG</div>
+        </div>
+        <button id="toggleAlphaModeBtn" class="px-2.5 py-1.5 rounded-lg border border-amber-500/35 bg-amber-950/40 text-amber-200 font-medium hover:bg-amber-900/50 transition">
+          Study Mode
+        </button>
+      </div>
+
+      <!-- Studio Key Light Warmth -->
+      <div>
+        <div class="flex justify-between text-amber-100/80 mb-1">
+          <span>Candle / Studio Rim Warmth</span>
+          <span id="warmthVal" class="text-amber-300">72%</span>
+        </div>
+        <input id="lightWarmthSlider" type="range" min="0" max="100" value="72" class="w-full accent-amber-500 cursor-pointer" />
+      </div>
+
+      <!-- Camera Reset -->
+      <div class="pt-1 flex gap-2">
+        <button id="resetCameraBtn" class="w-full py-2 rounded-lg border border-amber-500/30 bg-black/40 hover:bg-amber-950/50 text-amber-200 font-cinzel text-[11px] tracking-wider uppercase transition">
+          Reset Hero Angle
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Subtle Bottom Hint Pill -->
+  <div id="hintBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3 glass-hud px-4 py-2 rounded-full text-[11px] sm:text-xs text-amber-100/75 whitespace-nowrap">
+    <span>Drag to orbit 3D tome</span>
+    <span class="text-amber-400/50">•</span>
+    <span>Scroll to inspect grain</span>
+    <span class="text-amber-400/50">•</span>
+    <span class="text-amber-300 font-medium">Click tome to open archive</span>
+  </div>
+
+  <!-- Toast Notification Box (Replaces alert) -->
+  <div id="toastBox" class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 glass-hud px-4 py-2.5 rounded-xl text-xs text-amber-200 border border-amber-400/50 opacity-0 pointer-events-none transition-all duration-300 translate-y-2">
+    Snapshot captured!
+  </div>
+
+  <!-- Interactive Open Book Illuminated Parchment Reader (Appears when book opens) -->
+  <section id="grimoireReader" class="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-6 md:p-10 opacity-0 pointer-events-none transition-all duration-500 bg-black/65 backdrop-blur-sm">
+    <div class="parchment-sheet relative w-full max-w-5xl h-[86vh] max-h-[740px] rounded-2xl overflow-hidden flex flex-col text-[#23170d]">
+
+      <!-- Top Illuminated Header Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 sm:px-8 border-b border-[#8c6932]/35 bg-[#e5d2ad]/70">
+        <div class="flex items-center gap-2.5">
+          <span class="text-amber-800 text-base">✦</span>
+          <span class="font-cinzel font-bold text-xs sm:text-sm tracking-[0.22em] text-[#3d2511] uppercase">Liber Operum — Software Engineer's Archive</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="closeGrimoireBtn" class="px-3.5 py-1.5 rounded-lg bg-[#2e1b0e] text-[#f3dfb6] hover:bg-[#462916] font-cinzel text-xs tracking-wider transition flex items-center gap-1.5 shadow">
+            <span>Close Tome</span>
+            <span class="text-amber-300">✕</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chapter Navigation Ribbon -->
+      <nav class="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-8 py-2.5 bg-[#dcc59a]/60 border-b border-[#8c6932]/30 overflow-x-auto">
+        <button data-chapter="0" class="chapter-tab px-3 py-1.5 rounded-lg font-cinzel text-xs font-bold tracking-wider transition whitespace-nowrap bg-[#362011] text-[#f7e7c4]">
+          I. Works & Systems
+        </button>
+        <button data-chapter="1" class="chapter-tab px-3 py-1.5 rounded-lg font-cinzel text-xs font-semibold tracking-wider transition whitespace-nowrap text-[#4a2e18] hover:bg-[#c8ae7e]/50">
+          II. Experiments & Labs
+        </button>
+        <button data-chapter="2" class="chapter-tab px-3 py-1.5 rounded-lg font-cinzel text-xs font-semibold tracking-wider transition whitespace-nowrap text-[#4a2e18] hover:bg-[#c8ae7e]/50">
+          III. Research & Discoveries
+        </button>
+        <button data-chapter="3" class="chapter-tab px-3 py-1.5 rounded-lg font-cinzel text-xs font-semibold tracking-wider transition whitespace-nowrap text-[#4a2e18] hover:bg-[#c8ae7e]/50">
+          IV. Arcane Stack & Contact
+        </button>
+      </nav>
+
+      <!-- Two-Page Spread Content Area -->
+      <div id="spreadContainer" class="flex-1 grid grid-cols-1 md:grid-cols-2 overflow-y-auto md:overflow-hidden relative">
+        <!-- Center Spine Shadow on Desktop -->
+        <div class="hidden md:block absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-10 pointer-events-none z-10"
+             style="background: linear-gradient(90deg, rgba(61,37,17,0) 0%, rgba(61,37,17,0.16) 45%, rgba(35,20,9,0.28) 50%, rgba(61,37,17,0.16) 55%, rgba(61,37,17,0) 100%);"></div>
+
+        <!-- Left Folio Page -->
+        <div id="leftFolio" class="p-6 sm:p-8 md:p-10 md:overflow-y-auto parchment-scroll border-b md:border-b-0 md:border-r border-[#8c6932]/25">
+          <!-- Injected dynamically -->
+        </div>
+
+        <!-- Right Folio Page -->
+        <div id="rightFolio" class="p-6 sm:p-8 md:p-10 md:overflow-y-auto parchment-scroll">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- Bottom Folio Footer & Page Turners -->
+      <div class="flex items-center justify-between px-5 sm:px-8 py-3 bg-[#e5d2ad]/80 border-t border-[#8c6932]/35 text-xs font-cinzel text-[#4a2e18]">
+        <button id="prevChapterBtn" class="px-3 py-1.5 rounded-lg border border-[#7c5828]/40 hover:bg-[#cbb07f]/45 transition flex items-center gap-1.5 disabled:opacity-35">
+          <span>← Previous Folio</span>
+        </button>
+        <span id="folioIndicator" class="tracking-[0.2em] font-semibold">FOLIO I OF IV</span>
+        <button id="nextChapterBtn" class="px-3 py-1.5 rounded-lg border border-[#7c5828]/40 hover:bg-[#cbb07f]/45 transition flex items-center gap-1.5 disabled:opacity-35">
+          <span>Next Folio →</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /**
+     * ============================================================================
+     * 1. PORTFOLIO ARCHIVE DATA (Chapters & Interactive Artifacts)
+     * ============================================================================
+     */
+    const ARCHIVE_CHAPTERS = [
+      {
+        folio: "FOLIO I OF IV",
+        chapterNum: "CHAPTER I",
+        title: "Works & Production Systems",
+        epigraph: "“Architecture is the art of binding lightning into deterministic crystal.”",
+        summary: "Distributed engines, low-latency runtimes, and resilient cloud infrastructure forged across years of systems engineering.",
+        artifacts: [
+          {
+            code: "SYS-01",
+            name: "AetherCore Distributed Consensus Engine",
+            year: "2025",
+            role: "Lead Systems Architect",
+            metrics: "1.4M ops/sec • Sub-2ms p99",
+            description: "A Byzantine-fault-tolerant state replication engine written in Rust with zero-copy io_uring networking and deterministic simulation testing.",
+            tags: ["Rust", "Raft / BFT", "io_uring", "Deterministic Sim"]
+          },
+          {
+            code: "SYS-02",
+            name: "ChronosDB Temporal Graph Store",
+            year: "2024",
+            role: "Principal Engineer",
+            metrics: "40TB+ Production Clusters",
+            description: "Bitemporal knowledge graph database enabling time-travel queries across billions of interconnected engineering telemetry nodes.",
+            tags: ["C++20", "LSM-Tree", "SIMD", "Graph Query"]
+          },
+          {
+            code: "SYS-03",
+            name: "Valkyrie WebGPU Shader Compiler",
+            year: "2023",
+            role: "Creator & Maintainer",
+            metrics: "3.8x Frame Throughput",
+            description: "An ahead-of-time SPIR-V to WGSL optimizer and node-based visual material synthesizer powering browser-native 3D worlds.",
+            tags: ["WebGPU", "TypeScript", "WGSL", "Compilers"]
+          }
+        ]
+      },
+      {
+        folio: "FOLIO II OF IV",
+        chapterNum: "CHAPTER II",
+        title: "Experiments & Arcane Labs",
+        epigraph: "“Every breakthrough begins as a reckless incantation in an isolated sandbox.”",
+        summary: "Prototypes exploring spatial computing, neural synthesis, procedural geometry, and unconventional human-computer interfaces.",
+        artifacts: [
+          {
+            code: "LAB-07",
+            name: "RunicVM — Visual Bytecode Debugger",
+            year: "2025",
+            role: "Experimental Prototype",
+            metrics: "60fps Live Memory Graph",
+            description: "Transforms WASM stack frames and heap allocations into living geometric sigils so memory leaks appear as broken symmetry.",
+            tags: ["WebAssembly", "Three.js", "AST Analysis"]
+          },
+          {
+            code: "LAB-12",
+            name: "EchoLattice Neural Acoustic Synth",
+            year: "2024",
+            role: "Audio & DSP Research",
+            metrics: "< 4ms Latency",
+            description: "Real-time physical modeling synthesizer simulating medieval cathedral stone reverberation and bowed bronze resonance.",
+            tags: ["WebAudio", "C++ WASM", "DSP", "FFT"]
+          },
+          {
+            code: "LAB-19",
+            name: "GlyphFS — Content-Addressed Scroll Vault",
+            year: "2023",
+            role: "Solo Experiment",
+            metrics: "Merkle-DAG + Zstd",
+            description: "Cryptographically signed personal knowledge vault with peer-to-peer CRDT synchronization over WebRTC.",
+            tags: ["CRDTs", "WebRTC", "Cryptography"]
+          }
+        ]
+      },
+      {
+        folio: "FOLIO III OF IV",
+        chapterNum: "CHAPTER III",
+        title: "Research & Discoveries",
+        epigraph: "“To understand the machine, one must read both its silicon and its mathematics.”",
+        summary: "Published whitepapers, algorithmic discoveries, and deep-dive technical monographs documented for future practitioners.",
+        artifacts: [
+          {
+            code: "RES-01",
+            name: "Zero-Allocation Lock-Free Ring Buffers on Weakly-Ordered Silicon",
+            year: "2025",
+            role: "Monograph & Benchmarks",
+            metrics: "Cited by 42+ OSS Projects",
+            description: "Formal verification and ARM64 memory-barrier analysis eliminating cache-line ping-pong under extreme thread contention.",
+            tags: ["TLA+", "ARM64 Atomics", "Concurrency"]
+          },
+          {
+            code: "RES-02",
+            name: "Procedural PBR Micro-Surface Synthesis via Multi-Octave Voronoi",
+            year: "2024",
+            role: "Graphics Paper",
+            metrics: "4K Textures in 18ms",
+            description: "Deriving physically plausible leather grain, brushed bronze roughness, and gold-leaf normal maps purely from analytical noise.",
+            tags: ["PBR Shading", "GLSL", "Procedural Art"]
+          },
+          {
+            code: "RES-03",
+            name: "Sub-Linear Semantic Indexing for Million-File Monorepos",
+            year: "2023",
+            role: "Systems Discovery",
+            metrics: "12ms Cold Symbol Lookup",
+            description: "Hybrid trigram and learned-index architecture enabling instantaneous cross-language code navigation without background daemons.",
+            tags: ["Information Retrieval", "Rust", "Compilers"]
+          }
+        ]
+      },
+      {
+        folio: "FOLIO IV OF IV",
+        chapterNum: "CHAPTER IV",
+        title: "The Arcane Stack & Guild Contact",
+        epigraph: "“Tools do not make the master, yet a master knows the true name of every tool.”",
+        summary: "Core languages, low-level runtimes, graphics pipelines, and channels to summon the Architect for new commissions.",
+        artifacts: [
+          {
+            code: "STK-01",
+            name: "Systems & Core Languages",
+            year: "Mastery",
+            role: "Primary Arsenal",
+            metrics: "10+ Years Production",
+            description: "Rust, C++20, Go, TypeScript, Zig, and Python — focused on memory safety, predictable latency, and clean API ergonomics.",
+            tags: ["Rust", "C++20", "TypeScript", "Go", "Zig"]
+          },
+          {
+            code: "STK-02",
+            name: "Graphics, Shaders & Interactive Web",
+            year: "Mastery",
+            role: "Visual Craft",
+            metrics: "WebGL2 / WebGPU",
+            description: "Three.js, custom GLSL/WGSL shaders, procedural PBR texture synthesis, React, and tactile micro-interactions.",
+            tags: ["Three.js", "WebGPU", "GLSL", "Tailwind"]
+          },
+          {
+            code: "SUMMON",
+            name: "Dispatch a Raven / Initiate Collaboration",
+            year: "Open",
+            role: "Advisory & Principal Roles",
+            metrics: "Worldwide • Remote",
+            description: "Available for principal systems architecture, interactive 3D web experiences, and founding technical advisory.",
+            tags: ["architect@codex.dev", "github.com/architect", "PGP: 0x9F4A...E21C"]
+          }
+        ]
+      }
+    ];
+
+    /**
+     * ============================================================================
+     * 2. PROCEDURAL PBR TEXTURE GENERATOR (Leather, Gold Embossing, Parchment)
+     *    Generates ultra-detailed diffuse, bump/height, and roughness maps
+     *    with ZERO fake/garbled text—pure ornamental filigree & central emblem.
+     * ============================================================================
+     */
+    function createBookTextures(overlayOptions = { enabled: true, title: "ARCHIVES OF THE ARCHITECT", subtitle: "SYSTEMS • RESEARCH • ARTIFACTS" }) {
+      const width = 1024;
+      const height = 1400;
+
+      // Color / Albedo Canvas
+      const diffCanvas = document.createElement("canvas");
+      diffCanvas.width = width;
+      diffCanvas.height = height;
+      const ctx = diffCanvas.getContext("2d");
+
+      // Bump / Height Canvas (White = raised embossed gold/leather, Black = recessed)
+      const bumpCanvas = document.createElement("canvas");
+      bumpCanvas.width = width;
+      bumpCanvas.height = height;
+      const bCtx = bumpCanvas.getContext("2d");
+
+      // Roughness Canvas (Darker = shinier metallic gold, Lighter = matte aged leather)
+      const roughCanvas = document.createElement("canvas");
+      roughCanvas.width = width;
+      roughCanvas.height = height;
+      const rCtx = roughCanvas.getContext("2d");
+
+      // --- A. Deep Dark Walnut & Burnt Chocolate Leather Base ---
+      const baseGrad = ctx.createRadialGradient(width * 0.52, height * 0.48, 80, width * 0.5, height * 0.5, height * 0.72);
+      baseGrad.addColorStop(0, "#3b2316");
+      baseGrad.addColorStop(0.55, "#26150c");
+      baseGrad.addColorStop(1, "#140a06");
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Neutral mid-height for leather in bump map
+      bCtx.fillStyle = "#6e6e6e";
+      bCtx.fillRect(0, 0, width, height);
+
+      // High roughness base for leather
+      rCtx.fillStyle = "#d4d4d4";
+      rCtx.fillRect(0, 0, width, height);
+
+      // --- B. Realistic Leather Pebble Grain & Natural Wear ---
+      // Deterministic PRNG so textures remain consistent on live text updates
+      let seed = 133742;
+      function rand() {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      }
+
+      // Pebble cellular grain
+      for (let i = 0; i < 26000; i++) {
+        const x = rand() * width;
+        const y = rand() * height;
+        const r = 1.1 + rand() * 2.4;
+        const shade = rand();
+        ctx.fillStyle = shade > 0.5 ? "rgba(68, 41, 25, 0.22)" : "rgba(12, 6, 3, 0.28)";
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        const bVal = Math.floor(95 + shade * 42);
+        bCtx.fillStyle = `rgba(${bVal},${bVal},${bVal},0.35)`;
+        bCtx.beginPath();
+        bCtx.arc(x, y, r * 0.9, 0, Math.PI * 2);
+        bCtx.fill();
+      }
+
+      // Subtle antique scratches, patina scuffs & edge rub
+      for (let i = 0; i < 160; i++) {
+        const x1 = rand() * width;
+        const y1 = rand() * height;
+        const angle = rand() * Math.PI * 2;
+        const len = 18 + rand() * 95;
+        const x2 = x1 + Math.cos(angle) * len;
+        const y2 = y1 + Math.sin(angle) * len;
+
+        ctx.strokeStyle = rand() > 0.35 ? "rgba(88, 55, 34, 0.18)" : "rgba(10, 5, 2, 0.24)";
+        ctx.lineWidth = 0.6 + rand() * 1.3;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.quadraticCurveTo((x1 + x2) / 2 + (rand() - 0.5) * 14, (y1 + y2) / 2 + (rand() - 0.5) * 14, x2, y2);
+        ctx.stroke();
+
+        bCtx.strokeStyle = "rgba(45, 45, 45, 0.32)";
+        bCtx.lineWidth = 1;
+        bCtx.beginPath();
+        bCtx.moveTo(x1, y1);
+        bCtx.lineTo(x2, y2);
+        bCtx.stroke();
+      }
+
+      // Helper to draw on all 3 PBR maps simultaneously for gold embossing
+      function strokeGold(drawFn, lineWidth = 3, isBrightGold = true) {
+        ctx.save();
+        bCtx.save();
+        rCtx.save();
+
+        // Subtle dark recessed leather halo around gold tooling
+        ctx.strokeStyle = "rgba(10, 5, 2, 0.78)";
+        ctx.lineWidth = lineWidth + 3.5;
+        drawFn(ctx);
+        ctx.stroke();
+
+        // Antique muted gold gradient
+        const goldGrad = ctx.createLinearGradient(0, 0, width, height);
+        goldGrad.addColorStop(0, isBrightGold ? "#cfa84e" : "#9c7a38");
+        goldGrad.addColorStop(0.35, isBrightGold ? "#e5c56b" : "#b89347");
+        goldGrad.addColorStop(0.7, isBrightGold ? "#b8903d" : "#8a692c");
+        goldGrad.addColorStop(1, isBrightGold ? "#d9b45b" : "#9e7c39");
+
+        ctx.strokeStyle = goldGrad;
+        ctx.lineWidth = lineWidth;
+        drawFn(ctx);
+        ctx.stroke();
+
+        // Raised bump height
+        bCtx.strokeStyle = isBrightGold ? "#ececec" : "#c8c8c8";
+        bCtx.lineWidth = lineWidth + 0.8;
+        drawFn(bCtx);
+        bCtx.stroke();
+
+        // Low roughness (metallic sheen)
+        rCtx.strokeStyle = isBrightGold ? "#3b3b3b" : "#565656";
+        rCtx.lineWidth = lineWidth;
+        drawFn(rCtx);
+        rCtx.stroke();
+
+        ctx.restore();
+        bCtx.restore();
+        rCtx.restore();
+      }
+
+      function fillGold(drawFn, isBrightGold = true) {
+        ctx.save();
+        bCtx.save();
+        rCtx.save();
+
+        const goldGrad = ctx.createLinearGradient(width * 0.25, height * 0.25, width * 0.75, height * 0.75);
+        goldGrad.addColorStop(0, "#c89f46");
+        goldGrad.addColorStop(0.5, "#ebd07a");
+        goldGrad.addColorStop(1, "#a67e30");
+
+        ctx.fillStyle = goldGrad;
+        drawFn(ctx);
+        ctx.fill();
+
+        bCtx.fillStyle = isBrightGold ? "#f4f4f4" : "#d0d0d0";
+        drawFn(bCtx);
+        bCtx.fill();
+
+        rCtx.fillStyle = "#323232";
+        drawFn(rCtx);
+        rCtx.fill();
+
+        ctx.restore();
+        bCtx.restore();
+        rCtx.restore();
+      }
+
+      // --- C. Outer Medieval Manuscript Border Frame & Filigree ---
+      const padOuter = 68;
+      const padInner = 104;
+
+      // Double gold rule border
+      strokeGold((c) => {
+        c.beginPath();
+        c.rect(padOuter, padOuter, width - padOuter * 2, height - padOuter * 2);
+      }, 4.5, true);
+
+      strokeGold((c) => {
+        c.beginPath();
+        c.rect(padOuter + 12, padOuter + 12, width - (padOuter + 12) * 2, height - (padOuter + 12) * 2);
+      }, 2, false);
+
+      strokeGold((c) => {
+        c.beginPath();
+        c.rect(padInner, padInner, width - padInner * 2, height - padInner * 2);
+      }, 3, true);
+
+      // Repeating botanical guilloche dots & diamond scrollwork along border channel
+      const step = 28;
+      for (let x = padOuter + 24; x <= width - padOuter - 24; x += step) {
+        [padOuter + 24, height - padOuter - 24].forEach((y) => {
+          strokeGold((c) => {
+            c.beginPath();
+            c.moveTo(x, y - 6);
+            c.lineTo(x + 6, y);
+            c.lineTo(x, y + 6);
+            c.lineTo(x - 6, y);
+            c.closePath();
+          }, 1.6, false);
+        });
+      }
+      for (let y = padOuter + 24; y <= height - padOuter - 24; y += step) {
+        [padOuter + 24, width - padOuter - 24].forEach((x) => {
+          strokeGold((c) => {
+            c.beginPath();
+            c.moveTo(x, y - 6);
+            c.lineTo(x + 6, y);
+            c.lineTo(x, y + 6);
+            c.lineTo(x - 6, y);
+            c.closePath();
+          }, 1.6, false);
+        });
+      }
+
+      // --- D. Inner Lobed Gothic Cartouche Frame (Leaves clean central space) ---
+      const cx = width / 2;
+      const cy = height / 2;
+      const frameW = width - 290;
+      const frameH = height - 340;
+      const left = cx - frameW / 2;
+      const right = cx + frameW / 2;
+      const top = cy - frameH / 2;
+      const bottom = cy + frameH / 2;
+      const notch = 68;
+
+      strokeGold((c) => {
+        c.beginPath();
+        c.moveTo(left + notch, top);
+        c.lineTo(right - notch, top);
+        c.quadraticCurveTo(right - notch, top + notch, right, top + notch);
+        c.lineTo(right, bottom - notch);
+        c.quadraticCurveTo(right - notch, bottom - notch, right - notch, bottom);
+        c.lineTo(left + notch, bottom);
+        c.quadraticCurveTo(left + notch, bottom - notch, left, bottom - notch);
+        c.lineTo(left, top + notch);
+        c.quadraticCurveTo(left + notch, top + notch, left + notch, top);
+        c.closePath();
+      }, 3.5, true);
+
+      // Corner acanthus scroll flourishes inside the inner border
+      const cornerCoords = [
+        { x: padInner + 28, y: padInner + 28, sx: 1, sy: 1 },
+        { x: width - padInner - 28, y: padInner + 28, sx: -1, sy: 1 },
+        { x: padInner + 28, y: height - padInner - 28, sx: 1, sy: -1 },
+        { x: width - padInner - 28, y: height - padInner - 28, sx: -1, sy: -1 }
+      ];
+
+      cornerCoords.forEach(({ x, y, sx, sy }) => {
+        strokeGold((c) => {
+          c.beginPath();
+          c.moveTo(x, y);
+          c.bezierCurveTo(x + 75 * sx, y, x + 95 * sx, y + 35 * sy, x + 65 * sx, y + 65 * sy);
+          c.bezierCurveTo(x + 40 * sx, y + 88 * sy, x + 15 * sx, y + 55 * sy, x + 38 * sx, y + 38 * sy);
+          c.moveTo(x, y);
+          c.bezierCurveTo(x, y + 75 * sy, x + 35 * sx, y + 95 * sy, x + 65 * sx, y + 65 * sy);
+        }, 2.4, false);
+      });
+
+      // --- E. Central Circular Emblem: Open Ancient Book + Magical Star ---
+      const embRadius = 128;
+
+      // Outer & inner concentric medallion rings
+      strokeGold((c) => {
+        c.beginPath();
+        c.arc(cx, cy, embRadius, 0, Math.PI * 2);
+      }, 4, true);
+
+      strokeGold((c) => {
+        c.beginPath();
+        c.arc(cx, cy, embRadius - 12, 0, Math.PI * 2);
+      }, 1.8, false);
+
+      // Cardinal ornamental finials around medallion
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+        const r1 = embRadius + 4;
+        const r2 = embRadius + (a % (Math.PI / 2) === 0 ? 28 : 16);
+        strokeGold((c) => {
+          c.beginPath();
+          c.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+          c.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+        }, 2.4, true);
+
+        fillGold((c) => {
+          c.beginPath();
+          c.arc(cx + Math.cos(a) * (r2 + 4), cy + Math.sin(a) * (r2 + 4), 4, 0, Math.PI * 2);
+        }, true);
+      }
+
+      // Open Ancient Book Icon inside Medallion (shifted slightly down to leave room for star)
+      const bookY = cy + 28;
+      // Left Page
+      strokeGold((c) => {
+        c.beginPath();
+        c.moveTo(cx, bookY + 26);
+        c.bezierCurveTo(cx - 24, bookY + 14, cx - 54, bookY + 18, cx - 72, bookY + 26);
+        c.lineTo(cx - 64, bookY - 34);
+        c.bezierCurveTo(cx - 46, bookY - 42, cx - 22, bookY - 38, cx, bookY - 24);
+        c.closePath();
+      }, 3.2, true);
+
+      // Right Page
+      strokeGold((c) => {
+        c.beginPath();
+        c.moveTo(cx, bookY + 26);
+        c.bezierCurveTo(cx + 24, bookY + 14, cx + 54, bookY + 18, cx + 72, bookY + 26);
+        c.lineTo(cx + 64, bookY - 34);
+        c.bezierCurveTo(cx + 46, bookY - 42, cx + 22, bookY - 38, cx, bookY - 24);
+        c.closePath();
+      }, 3.2, true);
+
+      // Page thickness under-lines
+      strokeGold((c) => {
+        c.beginPath();
+        c.moveTo(cx - 74, bookY + 32);
+        c.bezierCurveTo(cx - 50, bookY + 24, cx - 22, bookY + 24, cx, bookY + 34);
+        c.bezierCurveTo(cx + 22, bookY + 24, cx + 50, bookY + 24, cx + 74, bookY + 32);
+      }, 2.2, false);
+
+      // Subtle ornamental horizontal lines on the miniature open book pages (purely geometric, no letters)
+      [-14, -3, 8].forEach((offsetY) => {
+        strokeGold((c) => {
+          c.beginPath();
+          c.moveTo(cx - 50, bookY + offsetY);
+          c.quadraticCurveTo(cx - 30, bookY + offsetY - 4, cx - 12, bookY + offsetY + 2);
+          c.moveTo(cx + 12, bookY + offsetY + 2);
+          c.quadraticCurveTo(cx + 30, bookY + offsetY - 4, cx + 50, bookY + offsetY);
+        }, 1.5, false);
+      });
+
+      // Magical 8-Pointed Star hovering above the Open Book
+      const starY = cy - 48;
+      fillGold((c) => {
+        c.beginPath();
+        const spikes = 8;
+        for (let i = 0; i < spikes * 2; i++) {
+          const rad = i % 2 === 0 ? (i % 4 === 0 ? 28 : 17) : 5.5;
+          const ang = (i * Math.PI) / spikes - Math.PI / 2;
+          const sx = cx + Math.cos(ang) * rad;
+          const sy = starY + Math.sin(ang) * rad;
+          if (i === 0) c.moveTo(sx, sy);
+          else c.lineTo(sx, sy);
+        }
+        c.closePath();
+      }, true);
+
+      // Tiny companion sparkles flanking the star
+      [
+        { x: cx - 42, y: starY + 8, r: 3.5 },
+        { x: cx + 42, y: starY + 8, r: 3.5 },
+        { x: cx - 26, y: starY - 22, r: 2.2 },
+        { x: cx + 26, y: starY - 22, r: 2.2 }
+      ].forEach((sp) => {
+        fillGold((c) => {
+          c.beginPath();
+          c.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+        }, true);
+      });
+
+      // --- F. Optional Clean Overlaid Portfolio Typography (User Controlled) ---
+      // Kept strictly off when disabled so leather remains 100% pure ornamental!
+      if (overlayOptions && overlayOptions.enabled) {
+        const titleText = (overlayOptions.title || "").trim().toUpperCase();
+        const subText = (overlayOptions.subtitle || "").trim().toUpperCase();
+
+        if (titleText) {
+          ctx.save();
+          ctx.font = "700 34px 'Cinzel', Georgia, serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "rgba(10, 5, 2, 0.85)";
+          ctx.fillText(titleText, cx + 2, top + 115 + 2);
+
+          const tGrad = ctx.createLinearGradient(cx - 240, 0, cx + 240, 0);
+          tGrad.addColorStop(0, "#c89f46");
+          tGrad.addColorStop(0.5, "#f3dc8b");
+          tGrad.addColorStop(1, "#c89f46");
+          ctx.fillStyle = tGrad;
+          ctx.fillText(titleText, cx, top + 115);
+
+          bCtx.font = "700 34px 'Cinzel', Georgia, serif";
+          bCtx.textAlign = "center";
+          bCtx.textBaseline = "middle";
+          bCtx.fillStyle = "#ebebeb";
+          bCtx.fillText(titleText, cx, top + 115);
+          ctx.restore();
+        }
+
+        if (subText) {
+          ctx.save();
+          ctx.font = "600 18px 'Cinzel', Georgia, serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "rgba(10, 5, 2, 0.85)";
+          ctx.fillText(subText, cx + 1.5, bottom - 110 + 1.5);
+          ctx.fillStyle = "#cfa84e";
+          ctx.fillText(subText, cx, bottom - 110);
+
+          bCtx.font = "600 18px 'Cinzel', Georgia, serif";
+          bCtx.textAlign = "center";
+          bCtx.textBaseline = "middle";
+          bCtx.fillStyle = "#dadada";
+          bCtx.fillText(subText, cx, bottom - 110);
+          ctx.restore();
+        }
+      }
+
+      const diffuseTex = new THREE.CanvasTexture(diffCanvas);
+      diffuseTex.anisotropy = 8;
+      diffuseTex.encoding = THREE.sRGBEncoding;
+
+      const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+      bumpTex.anisotropy = 8;
+
+      const roughTex = new THREE.CanvasTexture(roughCanvas);
+      roughTex.anisotropy = 8;
+
+      return { diffuseTex, bumpTex, roughTex };
+    }
+
+    /**
+     * Generates Aged Deckle-Edge Layered Parchment Page Block Texture
+     */
+    function createPageEdgeTextures() {
+      const w = 512;
+      const h = 1024;
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+
+      const bump = document.createElement("canvas");
+      bump.width = w;
+      bump.height = h;
+      const bCtx = bump.getContext("2d");
+
+      // Warm aged parchment base
+      const grad = ctx.createLinearGradient(0, 0, w, 0);
+      grad.addColorStop(0, "#b89b68");
+      grad.addColorStop(0.25, "#dec79b");
+      grad.addColorStop(0.75, "#d4ba88");
+      grad.addColorStop(1, "#9e7f4d");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      bCtx.fillStyle = "#808080";
+      bCtx.fillRect(0, 0, w, h);
+
+      // Hundreds of individual stacked parchment leaves
+      let s = 90210;
+      const rnd = () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
+
+      for (let x = 0; x < w; x += 2.2) {
+        const tone = rnd();
+        ctx.fillStyle = tone > 0.5
+          ? `rgba(246, 232, 200, ${0.28 + rnd() * 0.35})`
+          : `rgba(92, 65, 32, ${0.22 + rnd() * 0.35})`;
+        ctx.fillRect(x, 0, 1.4, h);
+
+        const bShade = Math.floor(70 + tone * 140);
+        bCtx.fillStyle = `rgb(${bShade},${bShade},${bShade})`;
+        bCtx.fillRect(x, 0, 1.4, h);
+      }
+
+      // Organic foxing / age stains along page edges
+      for (let i = 0; i < 95; i++) {
+        const fx = rnd() * w;
+        const fy = rnd() * h;
+        const fr = 8 + rnd() * 34;
+        const fGrad = ctx.createRadialGradient(fx, fy, 1, fx, fy, fr);
+        fGrad.addColorStop(0, "rgba(86, 56, 24, 0.24)");
+        fGrad.addColorStop(1, "rgba(86, 56, 24, 0)");
+        ctx.fillStyle = fGrad;
+        ctx.beginPath();
+        ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const map = new THREE.CanvasTexture(canvas);
+      map.wrapS = THREE.RepeatWrapping;
+      map.wrapT = THREE.RepeatWrapping;
+      map.encoding = THREE.sRGBEncoding;
+
+      const bumpMap = new THREE.CanvasTexture(bump);
+      bumpMap.wrapS = THREE.RepeatWrapping;
+      bumpMap.wrapT = THREE.RepeatWrapping;
+
+      return { map, bumpMap };
+    }
+
+    /**
+     * Generates Antique Embossed Bronze/Gold Corner Bracket Normal/Bump Texture
+     */
+    function createMetalFiligreeBump() {
+      const size = 256;
+      const c = document.createElement("canvas");
+      c.width = size;
+      c.height = size;
+      const ctx = c.getContext("2d");
+
+      ctx.fillStyle = "#7a7a7a";
+      ctx.fillRect(0, 0, size, size);
+
+      // Raised bevel border
+      ctx.strokeStyle = "#efefef";
+      ctx.lineWidth = 10;
+      ctx.strokeRect(10, 10, size - 20, size - 20);
+
+      // Baroque scroll relief inside bracket
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(48, 48, 24, 0, Math.PI * 2);
+      ctx.moveTo(48, 72);
+      ctx.quadraticCurveTo(95, 110, 155, 48);
+      ctx.moveTo(72, 48);
+      ctx.quadraticCurveTo(110, 95, 48, 155);
+      ctx.stroke();
+
+      // Rivet studs
+      [
+        [28, 28],
+        [size - 34, 28],
+        [28, size - 34]
+      ].forEach(([rx, ry]) => {
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(rx, ry, 8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const tex = new THREE.CanvasTexture(c);
+      return tex;
+    }
+
+    /**
+     * ============================================================================
+     * 3. THREE.JS 3D SCENE, LIGHTING & PROCEDURAL MEDIEVAL GRIMOIRE ASSEMBLY
+     * ============================================================================
+     */
+    let scene, camera, renderer, bookRoot, frontCoverPivot, dustParticles;
+    let keyLight, rimLight, fillLight, warmCandleLight;
+    let coverMaterial, spineMaterial, backCoverMaterial;
+    let isBookOpen = false;
+    let targetCoverAngle = 0; // 0 = closed, -Math.PI * 0.78 = open
+    let currentCoverAngle = 0;
+    let isAlphaStudioMode = false;
+
+    // Orbit & Parallax Interaction State
+    let isDragging = false;
+    let dragDistance = 0;
+    let prevPointer = { x: 0, y: 0 };
+    // Hero default angle: front-facing with slight perspective showing thickness & spine
+    const HERO_ROT_X = 0.08;
+    const HERO_ROT_Y = 0.34;
+    const HERO_ROT_Z = -0.02;
+    let targetRot = { x: HERO_ROT_X, y: HERO_ROT_Y, z: HERO_ROT_Z };
+    let currentRot = { x: HERO_ROT_X, y: HERO_ROT_Y, z: HERO_ROT_Z };
+    let mouseParallax = { x: 0, y: 0 };
+    let targetZoom = 7.4;
+    let currentZoom = 7.4;
+
+    function init3DScene() {
+      const container = document.getElementById("canvasContainer");
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 0.15, currentZoom);
+
+      // Alpha: true is critical so PNG exports have genuine transparency!
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        preserveDrawingBuffer: true,
+        powerPreference: "high-performance"
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      // --- Cinematic Three-Point Studio + Candle Rim Lighting ---
+      const ambientLight = new THREE.AmbientLight(0xffe8c8, 0.36);
+      scene.add(ambientLight);
+
+      // Primary Sculpting Key Light (Top-Left Front)
+      keyLight = new THREE.DirectionalLight(0xfff1d6, 1.65);
+      keyLight.position.set(-4.5, 5.5, 6.5);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      keyLight.shadow.bias = -0.0005;
+      scene.add(keyLight);
+
+      // Warm Antique Rim Light (Highlights gold corners & spine ribs)
+      rimLight = new THREE.DirectionalLight(0xffb454, 1.35);
+      rimLight.position.set(5.2, 3.8, -3.5);
+      scene.add(rimLight);
+
+      // Cool Subtle Fill Light (Reveals dark walnut leather grain in shadows)
+      fillLight = new THREE.DirectionalLight(0x9cb4d8, 0.52);
+      fillLight.position.set(4.5, -2.5, 4.5);
+      scene.add(fillLight);
+
+      // Magical Star Glint Point Light near cover center
+      warmCandleLight = new THREE.PointLight(0xffcf70, 0.85, 6);
+      warmCandleLight.position.set(0.3, 0.2, 2.2);
+      scene.add(warmCandleLight);
+
+      // --- Build the Closed/Openable Ancient Fantasy Tome ---
+      buildGrimoireMesh();
+
+      // --- Build Subtle Floating Wizard Study Dust Motes ---
+      buildDustMotes();
+
+      // --- Bind Pointer, Touch, Wheel & UI Events ---
+      setupInteractions(container);
+    }
+
+    function buildGrimoireMesh() {
+      bookRoot = new THREE.Group();
+      scene.add(bookRoot);
+
+      // Dimensions of our large, thick medieval folio
+      const bookW = 3.15;
+      const bookH = 4.25;
+      const boardThick = 0.14;
+      const pageBlockW = 2.94;
+      const pageBlockH = 3.98;
+      const pageBlockThick = 0.76;
+      const totalThick = pageBlockThick + boardThick * 2;
+
+      // Generate Procedural Textures
+      const { diffuseTex, bumpTex, roughTex } = createBookTextures({
+        enabled: true,
+        title: document.getElementById("coverTitleInput").value,
+        subtitle: document.getElementById("coverSubtitleInput").value
+      });
+
+      const plainLeatherTex = createBookTextures({ enabled: false });
+      const pageTextures = createPageEdgeTextures();
+      const metalBump = createMetalFiligreeBump();
+
+      // Materials
+      coverMaterial = new THREE.MeshStandardMaterial({
+        map: diffuseTex,
+        bumpMap: bumpTex,
+        bumpScale: 0.032,
+        roughnessMap: roughTex,
+        roughness: 0.72,
+        metalness: 0.28
+      });
+
+      backCoverMaterial = new THREE.MeshStandardMaterial({
+        map: plainLeatherTex.diffuseTex,
+        bumpMap: plainLeatherTex.bumpTex,
+        bumpScale: 0.028,
+        roughnessMap: plainLeatherTex.roughTex,
+        roughness: 0.78,
+        metalness: 0.22
+      });
+
+      spineMaterial = new THREE.MeshStandardMaterial({
+        color: 0x24130a,
+        bumpMap: plainLeatherTex.bumpTex,
+        bumpScale: 0.025,
+        roughness: 0.68,
+        metalness: 0.18
+      });
+
+      const antiqueGoldMat = new THREE.MeshStandardMaterial({
+        color: 0xc9a24b,
+        emissive: 0x1a1103,
+        bumpMap: metalBump,
+        bumpScale: 0.024,
+        roughness: 0.34,
+        metalness: 0.86
+      });
+
+      const agedParchmentMat = new THREE.MeshStandardMaterial({
+        map: pageTextures.map,
+        bumpMap: pageTextures.bumpMap,
+        bumpScale: 0.018,
+        roughness: 0.88,
+        metalness: 0.02
+      });
+
+      const innerEndpaperMat = new THREE.MeshStandardMaterial({
+        color: 0xdfd0b0,
+        bumpMap: pageTextures.bumpMap,
+        bumpScale: 0.008,
+        roughness: 0.9,
+        metalness: 0.0
+      });
+
+      // 1. Thick Aged Parchment Page Block (Slightly recessed inside boards)
+      const pageBlockGeo = new THREE.BoxGeometry(pageBlockW, pageBlockH, pageBlockThick);
+      const pageBlockMesh = new THREE.Mesh(pageBlockGeo, [
+        agedParchmentMat, // Right fore-edge
+        innerEndpaperMat, // Spine inner edge
+        agedParchmentMat, // Top edge
+        agedParchmentMat, // Bottom edge
+        innerEndpaperMat, // Front first page
+        innerEndpaperMat  // Back last page
+      ]);
+      pageBlockMesh.position.set(-0.04, 0, 0);
+      pageBlockMesh.castShadow = true;
+      pageBlockMesh.receiveShadow = true;
+      bookRoot.add(pageBlockMesh);
+
+      // Subtle organic deckle-edge parchment slips protruding slightly on fore-edge
+      for (let i = 0; i < 14; i++) {
+        const slipH = pageBlockH * (0.94 + (i % 3) * 0.02);
+        const slipGeo = new THREE.BoxGeometry(0.045, slipH, 0.028);
+        const slip = new THREE.Mesh(slipGeo, agedParchmentMat);
+        const zOff = -pageBlockThick * 0.44 + (i / 13) * (pageBlockThick * 0.88);
+        const xJitter = (Math.sin(i * 4.1) * 0.018);
+        slip.position.set(pageBlockW / 2 - 0.035 + xJitter, Math.cos(i * 2.3) * 0.02, zOff);
+        bookRoot.add(slip);
+      }
+
+      // 2. Back Heavy Leather Board
+      const backBoardGeo = new THREE.BoxGeometry(bookW, bookH, boardThick);
+      const backBoard = new THREE.Mesh(backBoardGeo, backCoverMaterial);
+      backBoard.position.set(0, 0, -totalThick / 2 + boardThick / 2);
+      backBoard.castShadow = true;
+      backBoard.receiveShadow = true;
+      bookRoot.add(backBoard);
+
+      // Back cover metallic corner brackets
+      addCornerBrackets(backBoard, bookW, bookH, boardThick, antiqueGoldMat, false);
+
+      // 3. Substantial Rounded Medieval Spine with Raised Ribs & Gold Bands
+      const spineGroup = new THREE.Group();
+      spineGroup.position.set(-bookW / 2, 0, 0);
+      bookRoot.add(spineGroup);
+
+      const spineRadius = totalThick / 2;
+      const spineCylGeo = new THREE.CylinderGeometry(
+        spineRadius,
+        spineRadius,
+        bookH + 0.02,
+        32,
+        1,
+        false,
+        Math.PI * 0.5,
+        Math.PI
+      );
+      const spineMesh = new THREE.Mesh(spineCylGeo, spineMaterial);
+      spineMesh.castShadow = true;
+      spineMesh.receiveShadow = true;
+      spineGroup.add(spineMesh);
+
+      // 5 Raised Horizontal Spine Hubs (Cords) + Gold Filigree Rings
+      const ribPositionsY = [-1.52, -0.76, 0, 0.76, 1.52];
+      ribPositionsY.forEach((ry) => {
+        // Leather cord hub
+        const hubGeo = new THREE.TorusGeometry(spineRadius + 0.012, 0.042, 14, 36, Math.PI);
+        const hubMesh = new THREE.Mesh(hubGeo, spineMaterial);
+        hubMesh.rotation.x = Math.PI / 2;
+        hubMesh.rotation.z = Math.PI / 2;
+        hubMesh.position.set(0, ry, 0);
+        spineGroup.add(hubMesh);
+
+        // Twin antique gold bands flanking each raised hub
+        [-0.055, 0.055].forEach((offset) => {
+          const goldBandGeo = new THREE.TorusGeometry(spineRadius + 0.008, 0.014, 10, 36, Math.PI);
+          const goldBand = new THREE.Mesh(goldBandGeo, antiqueGoldMat);
+          goldBand.rotation.x = Math.PI / 2;
+          goldBand.rotation.z = Math.PI / 2;
+          goldBand.position.set(0, ry + offset, 0);
+          spineGroup.add(goldBand);
+        });
+      });
+
+      // Gold Spine Head & Tail Crown Caps
+      [-bookH / 2 + 0.14, bookH / 2 - 0.14].forEach((capY) => {
+        const capBandGeo = new THREE.TorusGeometry(spineRadius + 0.01, 0.022, 12, 36, Math.PI);
+        const capBand = new THREE.Mesh(capBandGeo, antiqueGoldMat);
+        capBand.rotation.x = Math.PI / 2;
+        capBand.rotation.z = Math.PI / 2;
+        capBand.position.set(0, capY, 0);
+        spineGroup.add(capBand);
+      });
+
+      // 4. Hinged Front Cover Pivot (Allows realistic opening around spine hinge!)
+      frontCoverPivot = new THREE.Group();
+      frontCoverPivot.position.set(-bookW / 2, 0, totalThick / 2 - boardThick / 2);
+      bookRoot.add(frontCoverPivot);
+
+      const frontBoardGeo = new THREE.BoxGeometry(bookW, bookH, boardThick);
+      // Apply detailed embossed leather+gold cover material to front face (+Z), dark leather to edges/inside
+      const sideLeatherMat = new THREE.MeshStandardMaterial({
+        color: 0x22120a,
+        roughness: 0.78,
+        metalness: 0.15
+      });
+      const frontBoard = new THREE.Mesh(frontBoardGeo, [
+        sideLeatherMat, // Right edge
+        sideLeatherMat, // Left hinge edge
+        sideLeatherMat, // Top edge
+        sideLeatherMat, // Bottom edge
+        coverMaterial,  // Front Hero Cover (+Z)
+        innerEndpaperMat // Inside front cover (-Z)
+      ]);
+      frontBoard.position.set(bookW / 2, 0, 0);
+      frontBoard.castShadow = true;
+      frontBoard.receiveShadow = true;
+      frontCoverPivot.add(frontBoard);
+
+      // 4 Ornate Metallic Antique Gold/Bronze Corner Brackets on Front Cover
+      addCornerBrackets(frontBoard, bookW, bookH, boardThick, antiqueGoldMat, true);
+
+      // Subtle Central Medallion Raised Rim Ring in 3D Metallic Gold
+      const emblemRingGeo = new THREE.TorusGeometry(0.41, 0.016, 14, 48);
+      const emblemRing = new THREE.Mesh(emblemRingGeo, antiqueGoldMat);
+      emblemRing.position.set(0, 0, boardThick / 2 + 0.008);
+      frontBoard.add(emblemRing);
+
+      // Subtle Glowing Magical Star Gem above the Miniature Open Book on Cover
+      const starGemGeo = new THREE.OctahedronGeometry(0.055, 0);
+      const starGemMat = new THREE.MeshStandardMaterial({
+        color: 0xffe49e,
+        emissive: 0xffb838,
+        emissiveIntensity: 0.9,
+        roughness: 0.2,
+        metalness: 0.8
+      });
+      const starGem = new THREE.Mesh(starGemGeo, starGemMat);
+      starGem.scale.set(1, 1.35, 0.35);
+      starGem.position.set(0, 0.145, boardThick / 2 + 0.014);
+      frontBoard.add(starGem);
+
+      // Set Initial Hero Rotation
+      bookRoot.rotation.set(currentRot.x, currentRot.y, currentRot.z);
+    }
+
+    /**
+     * Constructs sculpted 3D medieval metallic corner protectors that wrap around
+     * the board edges and feature raised ornamental filigree plates.
+     */
+    function addCornerBrackets(parentBoard, bookW, bookH, boardThick, goldMaterial, isFront) {
+      const armLen = 0.62;
+      const plateThick = 0.028;
+      const wrapDepth = boardThick + plateThick * 1.6;
+
+      // Custom L-shaped triangular medieval corner shield geometry
+      const cornerShape = new THREE.Shape();
+      cornerShape.moveTo(0, 0);
+      cornerShape.lineTo(armLen, 0);
+      cornerShape.lineTo(armLen, 0.16);
+      cornerShape.quadraticCurveTo(0.26, 0.26, 0.16, armLen);
+      cornerShape.lineTo(0, armLen);
+      cornerShape.closePath();
+
+      const extrudeSettings = {
+        steps: 1,
+        depth: wrapDepth,
+        bevelEnabled: true,
+        bevelThickness: 0.012,
+        bevelSize: 0.012,
+        bevelSegments: 2
+      };
+
+      const cornerGeo = new THREE.ExtrudeGeometry(cornerShape, extrudeSettings);
+      // Center extrusion along Z
+      cornerGeo.translate(0, 0, -wrapDepth / 2);
+
+      const corners = [
+        { x: -bookW / 2 - 0.01, y: bookH / 2 + 0.01, rotZ: -Math.PI / 2 },  // Top-Left
+        { x: bookW / 2 + 0.01, y: bookH / 2 + 0.01, rotZ: Math.PI },        // Top-Right
+        { x: -bookW / 2 - 0.01, y: -bookH / 2 - 0.01, rotZ: 0 },            // Bottom-Left
+        { x: bookW / 2 + 0.01, y: -bookH / 2 - 0.01, rotZ: Math.PI / 2 }    // Bottom-Right
+      ];
+
+      corners.forEach((c) => {
+        const bracket = new THREE.Mesh(cornerGeo, goldMaterial);
+        bracket.position.set(c.x, c.y, 0);
+        bracket.rotation.z = c.rotZ;
+        bracket.castShadow = true;
+        bracket.receiveShadow = true;
+        parentBoard.add(bracket);
+
+        // Decorative raised gold boss stud on the front face of each corner
+        if (isFront) {
+          const bossGeo = new THREE.SphereGeometry(0.036, 12, 12);
+          const boss = new THREE.Mesh(bossGeo, goldMaterial);
+          boss.scale.set(1, 1, 0.45);
+          boss.position.set(0.16, 0.16, wrapDepth / 2 + 0.008);
+          bracket.add(boss);
+        }
+      });
+    }
+
+    /**
+     * Subtle floating golden dust motes for the Wizard's Library atmosphere
+     */
+    function buildDustMotes() {
+      const count = 130;
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 9;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 7;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 5;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+      const mat = new THREE.PointsMaterial({
+        color: 0xf6cf78,
+        size: 0.032,
+        transparent: true,
+        opacity: 0.55,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+
+      dustParticles = new THREE.Points(geo, mat);
+      scene.add(dustParticles);
+    }
+
+    /**
+     * ============================================================================
+     * 4. INTERACTIVE CONTROLS, ORBIT DRAG, BOOK OPENING & PNG EXPORT
+     * ============================================================================
+     */
+    function setupInteractions(container) {
+      // Pointer down (Mouse & Touch)
+      container.addEventListener("pointerdown", (e) => {
+        isDragging = true;
+        dragDistance = 0;
+        prevPointer = { x: e.clientX, y: e.clientY };
+      });
+
+      window.addEventListener("pointermove", (e) => {
+        // Subtle parallax tilt when hovering
+        const nx = (e.clientX / window.innerWidth) * 2 - 1;
+        const ny = (e.clientY / window.innerHeight) * 2 - 1;
+        mouseParallax.x = ny * 0.06;
+        mouseParallax.y = nx * 0.08;
+
+        if (!isDragging) return;
+        const dx = e.clientX - prevPointer.x;
+        const dy = e.clientY - prevPointer.y;
+        dragDistance += Math.hypot(dx, dy);
+
+        targetRot.y += dx * 0.0075;
+        targetRot.x += dy * 0.0065;
+        // Clamp vertical tilt so book remains gracefully framed
+        targetRot.x = Math.max(-0.85, Math.min(0.85, targetRot.x));
+
+        prevPointer = { x: e.clientX, y: e.clientY };
+      });
+
+      window.addEventListener("pointerup", () => {
+        if (isDragging && dragDistance < 6) {
+          // Clean click on the 3D book toggles opening the archive!
+          toggleBookArchive(true);
+        }
+        isDragging = false;
+      });
+
+      // Scroll Wheel Zoom
+      container.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        targetZoom += e.deltaY * 0.004;
+        targetZoom = Math.max(4.6, Math.min(11.5, targetZoom));
+      }, { passive: false });
+
+      // Window Resize
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // --- UI Button Bindings ---
+      document.getElementById("toggleBookBtn").addEventListener("click", () => {
+        toggleBookArchive(!isBookOpen);
+      });
+
+      document.getElementById("closeGrimoireBtn").addEventListener("click", () => {
+        toggleBookArchive(false);
+      });
+
+      // Studio Drawer Toggles
+      const studioDrawer = document.getElementById("studioDrawer");
+      document.getElementById("toggleStudioDrawerBtn").addEventListener("click", () => {
+        const isOpen = !studioDrawer.classList.contains("opacity-0");
+        if (isOpen) {
+          studioDrawer.classList.add("opacity-0", "translate-y-2", "pointer-events-none");
+        } else {
+          studioDrawer.classList.remove("opacity-0", "translate-y-2", "pointer-events-none");
+        }
+      });
+
+      document.getElementById("closeDrawerBtn").addEventListener("click", () => {
+        studioDrawer.classList.add("opacity-0", "translate-y-2", "pointer-events-none");
+      });
+
+      // Live Cover Typography Updates
+      const refreshCoverTexture = () => {
+        const enabled = document.getElementById("toggleOverlayText").checked;
+        const title = document.getElementById("coverTitleInput").value;
+        const subtitle = document.getElementById("coverSubtitleInput").value;
+        const { diffuseTex, bumpTex, roughTex } = createBookTextures({ enabled, title, subtitle });
+
+        if (coverMaterial.map) coverMaterial.map.dispose();
+        if (coverMaterial.bumpMap) coverMaterial.bumpMap.dispose();
+        if (coverMaterial.roughnessMap) coverMaterial.roughnessMap.dispose();
+
+        coverMaterial.map = diffuseTex;
+        coverMaterial.bumpMap = bumpTex;
+        coverMaterial.roughnessMap = roughTex;
+        coverMaterial.needsUpdate = true;
+      };
+
+      document.getElementById("toggleOverlayText").addEventListener("change", refreshCoverTexture);
+      document.getElementById("coverTitleInput").addEventListener("input", refreshCoverTexture);
+      document.getElementById("coverSubtitleInput").addEventListener("input", refreshCoverTexture);
+
+      // Alpha Transparent Studio Mode Toggle
+      const toggleAlphaBtn = document.getElementById("toggleAlphaModeBtn");
+      const backdropLayer = document.getElementById("backdropLayer");
+      const vignetteLayer = document.getElementById("vignetteLayer");
+
+      toggleAlphaBtn.addEventListener("click", () => {
+        isAlphaStudioMode = !isAlphaStudioMode;
+        if (isAlphaStudioMode) {
+          backdropLayer.classList.remove("study-backdrop");
+          backdropLayer.classList.add("studio-backdrop");
+          vignetteLayer.style.opacity = "0";
+          if (dustParticles) dustParticles.visible = false;
+          toggleAlphaBtn.textContent = "Alpha Checker";
+          showToast("Transparent Alpha Studio Mode active — ready for PNG export");
+        } else {
+          backdropLayer.classList.remove("studio-backdrop");
+          backdropLayer.classList.add("study-backdrop");
+          vignetteLayer.style.opacity = "1";
+          if (dustParticles) dustParticles.visible = true;
+          toggleAlphaBtn.textContent = "Study Mode";
+        }
+      });
+
+      // Candle / Studio Rim Light Warmth Slider
+      const warmthSlider = document.getElementById("lightWarmthSlider");
+      const warmthVal = document.getElementById("warmthVal");
+      warmthSlider.addEventListener("input", (e) => {
+        const v = Number(e.target.value);
+        warmthVal.textContent = `${v}%`;
+        const t = v / 100;
+        // Interpolate rim light from cool studio silver-gold to deep candle amber
+        const color = new THREE.Color().lerpColors(new THREE.Color(0xdbe8ff), new THREE.Color(0xff9d2e), t);
+        rimLight.color.copy(color);
+        rimLight.intensity = 1.0 + t * 0.65;
+        warmCandleLight.intensity = 0.35 + t * 0.85;
+      });
+
+      // Reset Hero Angle
+      document.getElementById("resetCameraBtn").addEventListener("click", () => {
+        targetRot = { x: HERO_ROT_X, y: HERO_ROT_Y, z: HERO_ROT_Z };
+        targetZoom = 7.4;
+        showToast("Restored hero composition");
+      });
+
+      // Export Clean Transparent PNG Render of the 3D Tome
+      document.getElementById("exportPngBtn").addEventListener("click", () => {
+        const wasDustVisible = dustParticles ? dustParticles.visible : false;
+        if (dustParticles) dustParticles.visible = false;
+
+        // Render an isolated transparent frame
+        renderer.render(scene, camera);
+        const dataUrl = renderer.domElement.toDataURL("image/png");
+
+        if (dustParticles) dustParticles.visible = wasDustVisible;
+
+        const link = document.createElement("a");
+        link.download = "ancient-fantasy-archive-book.png";
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast("Downloaded transparent PNG render!");
+      });
+    }
+
+    /**
+     * Opens or closes the 3D cover and displays the illuminated portfolio spread
+     */
+    function toggleBookArchive(openState) {
+      isBookOpen = openState;
+      const reader = document.getElementById("grimoireReader");
+      const btnLabel = document.getElementById("bookBtnLabel");
+
+      if (isBookOpen) {
+        targetCoverAngle = -Math.PI * 0.72;
+        targetRot = { x: 0.04, y: 0.12, z: 0 };
+        btnLabel.textContent = "Close Archive";
+
+        // Delay revealing the illuminated parchment folio slightly so user sees 3D cover swing open
+        setTimeout(() => {
+          if (isBookOpen) {
+            reader.classList.remove("opacity-0", "pointer-events-none");
+          }
+        }, 360);
+      } else {
+        targetCoverAngle = 0;
+        targetRot = { x: HERO_ROT_X, y: HERO_ROT_Y, z: HERO_ROT_Z };
+        btnLabel.textContent = "Open Archive";
+        reader.classList.add("opacity-0", "pointer-events-none");
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toastBox");
+      toast.textContent = message;
+      toast.classList.remove("opacity-0", "translate-y-2");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+      }, 2600);
+    }
+
+    /**
+     * ============================================================================
+     * 5. ILLUMINATED PARCHMENT PORTFOLIO READER LOGIC
+     * ============================================================================
+     */
+    let activeChapterIdx = 0;
+
+    function renderChapter(index) {
+      activeChapterIdx = Math.max(0, Math.min(ARCHIVE_CHAPTERS.length - 1, index));
+      const ch = ARCHIVE_CHAPTERS[activeChapterIdx];
+
+      // Update Tab Active Styles
+      document.querySelectorAll(".chapter-tab").forEach((tab, idx) => {
+        if (idx === activeChapterIdx) {
+          tab.className = "chapter-tab px-3 py-1.5 rounded-lg font-cinzel text-xs font-bold tracking-wider transition whitespace-nowrap bg-[#362011] text-[#f7e7c4] shadow-sm";
+        } else {
+          tab.className = "chapter-tab px-3 py-1.5 rounded-lg font-cinzel text-xs font-semibold tracking-wider transition whitespace-nowrap text-[#4a2e18] hover:bg-[#c8ae7e]/50";
+        }
+      });
+
+      document.getElementById("folioIndicator").textContent = ch.folio;
+      document.getElementById("prevChapterBtn").disabled = activeChapterIdx === 0;
+      document.getElementById("nextChapterBtn").disabled = activeChapterIdx === ARCHIVE_CHAPTERS.length - 1;
+
+      const leftFolio = document.getElementById("leftFolio");
+      const rightFolio = document.getElementById("rightFolio");
+
+      // Trigger subtle page-turn animation
+      leftFolio.classList.remove("page-fade-enter");
+      rightFolio.classList.remove("page-fade-enter");
+      void leftFolio.offsetWidth;
+      leftFolio.classList.add("page-fade-enter");
+      rightFolio.classList.add("page-fade-enter");
+
+      // Left Page: Illuminated Chapter Illumination & First Artifact
+      const leadArtifact = ch.artifacts[0];
+      leftFolio.innerHTML = `
+        <div class="space-y-5">
+          <div class="flex items-center justify-between text-[11px] font-cinzel font-bold tracking-[0.25em] text-[#7a5226]">
+            <span>${ch.chapterNum}</span>
+            <span>✦ ANNO DOMINI MMXXVI</span>
+          </div>
+
+          <h2 class="font-cinzel-dec text-2xl sm:text-3xl font-bold text-[#2b1709] leading-tight">
+            ${ch.title}
+          </h2>
+
+          <blockquote class="font-garamond italic text-base sm:text-lg text-[#59381c] border-l-2 border-[#9e7438] pl-3.5 py-0.5">
+            ${ch.epigraph}
+          </blockquote>
+
+          <p class="font-garamond text-base sm:text-lg leading-relaxed text-[#331e0e]">
+            ${ch.summary}
+          </p>
+
+          <div class="ink-divider my-4"></div>
+
+          <!-- Illuminated Lead Entry -->
+          <article class="p-4 sm:p-5 rounded-xl bg-[#e3cfa6]/65 border border-[#8c6932]/40 shadow-inner">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <span class="font-cinzel text-[11px] font-bold px-2 py-0.5 rounded bg-[#362011] text-[#f4dfB6] tracking-wider">${leadArtifact.code}</span>
+              <span class="font-cinzel text-xs font-semibold text-[#6e4820]">${leadArtifact.year} • ${leadArtifact.metrics}</span>
+            </div>
+            <h3 class="font-cinzel text-base sm:text-lg font-bold text-[#241307] mt-1">${leadArtifact.name}</h3>
+            <div class="text-xs font-semibold text-[#7a5022] mb-2">${leadArtifact.role}</div>
+            <p class="font-garamond text-base leading-relaxed text-[#2f1b0c]">${leadArtifact.description}</p>
+            <div class="flex flex-wrap gap-1.5 mt-3">
+              ${leadArtifact.tags.map(t => `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-[#cbb07d]/60 border border-[#8c6932]/35 text-[#362011]">${t}</span>`).join("")}
+            </div>
+          </article>
+        </div>
+      `;
+
+      // Right Page: Remaining Artifacts & Interactive Seal
+      const remaining = ch.artifacts.slice(1);
+      rightFolio.innerHTML = `
+        <div class="space-y-5">
+          <div class="flex items-center justify-between text-[11px] font-cinzel font-bold tracking-[0.22em] text-[#7a5226]">
+            <span>CATALOGUED ARTIFACTS</span>
+            <span>CODEX ARCHIVE</span>
+          </div>
+
+          ${remaining.map(item => `
+            <article class="p-4 sm:p-5 rounded-xl bg-[#e3cfa6]/55 hover:bg-[#e3cfa6]/90 transition border border-[#8c6932]/35">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="font-cinzel text-[11px] font-bold px-2 py-0.5 rounded bg-[#4d2f18] text-[#f4dfb6] tracking-wider">${item.code}</span>
+                <span class="font-cinzel text-xs font-semibold text-[#6e4820]">${item.year} • ${item.metrics}</span>
+              </div>
+              <h3 class="font-cinzel text-base sm:text-lg font-bold text-[#241307] mt-1">${item.name}</h3>
+              <div class="text-xs font-semibold text-[#7a5022] mb-2">${item.role}</div>
+              <p class="font-garamond text-base leading-relaxed text-[#2f1b0c]">${item.description}</p>
+              <div class="flex flex-wrap gap-1.5 mt-3">
+                ${item.tags.map(t => `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-[#cbb07d]/55 border border-[#8c6932]/35 text-[#362011]">${t}</span>`).join("")}
+              </div>
+            </article>
+          `).join("")}
+
+          <div class="pt-2 flex items-center justify-between text-xs font-garamond italic text-[#634121]">
+            <span>Verified by the Architect's Seal</span>
+            <span class="font-cinzel not-italic font-bold text-[#7c5323]">✦ ✦ ✦</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function initReaderNavigation() {
+      document.querySelectorAll(".chapter-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          renderChapter(Number(btn.dataset.chapter));
+        });
+      });
+
+      document.getElementById("prevChapterBtn").addEventListener("click", () => {
+        renderChapter(activeChapterIdx - 1);
+      });
+
+      document.getElementById("nextChapterBtn").addEventListener("click", () => {
+        renderChapter(activeChapterIdx + 1);
+      });
+
+      renderChapter(0);
+    }
+
+    /**
+     * ============================================================================
+     * 6. MAIN ANIMATION LOOP
+     * ============================================================================
+     */
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const elapsed = clock.getElapsedTime();
+
+      // Smoothly damp rotation + subtle breathing levitation + mouse parallax
+      const desiredX = targetRot.x + mouseParallax.x + Math.sin(elapsed * 0.9) * 0.012;
+      const desiredY = targetRot.y + mouseParallax.y + Math.cos(elapsed * 0.7) * 0.015;
+      const desiredZ = targetRot.z;
+
+      currentRot.x += (desiredX - currentRot.x) * 0.08;
+      currentRot.y += (desiredY - currentRot.y) * 0.08;
+      currentRot.z += (desiredZ - currentRot.z) * 0.08;
+
+      if (bookRoot) {
+        bookRoot.rotation.set(currentRot.x, currentRot.y, currentRot.z);
+        bookRoot.position.y = Math.sin(elapsed * 1.1) * 0.035;
+      }
+
+      // Smoothly animate front cover hinge opening/closing
+      if (frontCoverPivot) {
+        currentCoverAngle += (targetCoverAngle - currentCoverAngle) * 0.09;
+        frontCoverPivot.rotation.y = currentCoverAngle;
+      }
+
+      // Smooth camera zoom
+      currentZoom += (targetZoom - currentZoom) * 0.1;
+      camera.position.z = currentZoom;
+
+      // Subtle magical star light shimmer
+      if (warmCandleLight) {
+        warmCandleLight.position.x = 0.25 + Math.sin(elapsed * 1.8) * 0.15;
+        warmCandleLight.position.y = 0.2 + Math.cos(elapsed * 1.5) * 0.12;
+      }
+
+      // Gentle drift of study dust motes
+      if (dustParticles && dustParticles.visible) {
+        dustParticles.rotation.y = elapsed * 0.025;
+        dustParticles.position.y = Math.sin(elapsed * 0.4) * 0.12;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Boot once window loads
+    window.addEventListener("load", () => {
+      init3DScene();
+      initReaderNavigation();
+      animate();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THE FORGOTTEN ARCHIVES — Arcane Developer Portfolio</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Google Fonts: Cinzel, Cormorant Garamond, Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            walnut: '#21150F',
+            deepbrown: '#38251B',
+            coffee: '#765139',
+            gold: '#B49A62',
+            goldbright: '#E5C67E',
+            parchment: '#F3E7CE',
+            parchmentdark: '#DFCCA6',
+          },
+          fontFamily: {
+            cinzel: ['Cinzel', 'serif'],
+            garamond: ['Cormorant Garamond', 'serif'],
+            code: ['Fira Code', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #140c08;
+      color: #F3E7CE;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      cursor: grab;
+    }
+
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* Subtle cinematic vignette */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(circle at 50% 45%, rgba(20, 12, 8, 0) 45%, rgba(10, 6, 4, 0.78) 100%);
+    }
+
+    /* Custom Scrollbar for Grimoire Reader */
+    .parchment-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .parchment-scroll::-webkit-scrollbar-track {
+      background: rgba(56, 37, 27, 0.15);
+      border-radius: 999px;
+    }
+    .parchment-scroll::-webkit-scrollbar-thumb {
+      background: #765139;
+      border-radius: 999px;
+    }
+
+    /* Ornate Gold Border Glow */
+    .gold-frame {
+      border: 1px solid rgba(180, 154, 98, 0.45);
+      box-shadow:
+        0 0 25px rgba(0, 0, 0, 0.75),
+        inset 0 0 18px rgba(180, 154, 98, 0.12);
+    }
+
+    .parchment-sheet {
+      background:
+        radial-gradient(ellipse at top left, rgba(255, 250, 238, 0.96), rgba(235, 216, 179, 0.94) 60%, rgba(212, 187, 141, 0.95) 100%);
+      color: #21150F;
+      box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.85),
+        0 0 40px rgba(180, 154, 98, 0.25),
+        inset 0 0 50px rgba(118, 81, 57, 0.28);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(229, 198, 126, 0.55)); }
+      50% { filter: drop-shadow(0 0 18px rgba(229, 198, 126, 0.95)); }
+    }
+
+    .rune-glow {
+      animation: pulseGlow 3.2s infinite ease-in-out;
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .animate-float {
+      animation: floatSlow 4s ease-in-out infinite;
+    }
+
+    /* Allow text selection inside form inputs & parchment text */
+    input, textarea, .selectable-text {
+      user-select: text;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WebGL 3D Scene Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Atmospheric Vignette -->
+  <div class="vignette"></div>
+
+  <!-- Top Header & Navigation HUD -->
+  <header class="fixed top-0 left-0 right-0 z-20 px-4 sm:px-8 pt-4 pb-3 flex flex-col md:flex-row items-center justify-between gap-3 pointer-events-none">
+    <!-- Title Emblem -->
+    <div class="pointer-events-auto flex items-center gap-3 bg-walnut/80 backdrop-blur-md px-4 py-2 rounded-xl gold-frame">
+      <svg class="w-7 h-7 text-goldbright rune-glow shrink-0" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="15" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 2"/>
+        <polygon points="18,4 30,25 6,25" stroke="currentColor" stroke-width="1.3" fill="rgba(180,154,98,0.1)"/>
+        <circle cx="18" cy="18" r="4" fill="currentColor"/>
+      </svg>
+      <div>
+        <h1 class="font-cinzel text-sm sm:text-base md:text-lg font-bold tracking-[0.2em] text-goldbright leading-tight">
+          THE FORGOTTEN ARCHIVES
+        </h1>
+        <p class="text-[11px] sm:text-xs text-gold/80 tracking-widest uppercase font-code">
+          Keeper of Code &bull; Full-Stack &amp; Creative Technologist
+        </p>
+      </div>
+    </div>
+
+    <!-- Chapter Navigation Pills -->
+    <nav class="pointer-events-auto flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 bg-walnut/85 backdrop-blur-md p-1.5 rounded-xl gold-frame">
+      <button onclick="openChapter(0)" id="nav-0" class="chapter-btn px-3 py-1.5 rounded-lg font-cinzel text-xs sm:text-sm tracking-wider transition-all text-parchment hover:text-goldbright hover:bg-deepbrown/80">
+        I. The Keeper
+      </button>
+      <button onclick="openChapter(1)" id="nav-1" class="chapter-btn px-3 py-1.5 rounded-lg font-cinzel text-xs sm:text-sm tracking-wider transition-all text-parchment hover:text-goldbright hover:bg-deepbrown/80">
+        II. Artifacts
+      </button>
+      <button onclick="openChapter(2)" id="nav-2" class="chapter-btn px-3 py-1.5 rounded-lg font-cinzel text-xs sm:text-sm tracking-wider transition-all text-parchment hover:text-goldbright hover:bg-deepbrown/80">
+        III. Chronicles
+      </button>
+      <button onclick="openChapter(3)" id="nav-3" class="chapter-btn px-3 py-1.5 rounded-lg font-cinzel text-xs sm:text-sm tracking-wider transition-all text-parchment hover:text-goldbright hover:bg-deepbrown/80">
+        IV. Summon
+      </button>
+    </nav>
+
+    <!-- Atmospheric Controls -->
+    <div class="pointer-events-auto hidden lg:flex items-center gap-2 bg-walnut/80 backdrop-blur-md px-3 py-2 rounded-xl gold-frame">
+      <button id="toggle-magic-btn" onclick="toggleMagicIntensity()" title="Adjust Candlelight & Arcane Motes"
+        class="px-3 py-1 rounded-lg bg-deepbrown/80 hover:bg-coffee/60 text-goldbright text-xs font-cinzel tracking-wider border border-gold/30 transition">
+        ✦ Aether: High
+      </button>
+      <button onclick="resetCameraView()" title="Center View"
+        class="px-2.5 py-1 rounded-lg bg-deepbrown/80 hover:bg-coffee/60 text-parchment text-xs font-cinzel border border-gold/30 transition">
+        ⌖ Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- Subtle Interactive Prompts / Callouts -->
+  <div id="scene-prompt" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-10 pointer-events-none text-center transition-opacity duration-500">
+    <div class="inline-flex items-center gap-2.5 bg-walnut/80 backdrop-blur-md px-5 py-2 rounded-full gold-frame animate-float">
+      <span class="w-2 h-2 rounded-full bg-goldbright animate-ping"></span>
+      <span class="font-cinzel text-xs sm:text-sm tracking-[0.16em] text-goldbright">
+        CLICK THE GRIMOIRE ON THE DESK TO UNSEAL THE PORTFOLIO
+      </span>
+    </div>
+  </div>
+
+  <!-- AI Familiar Wisp Speech Bubble (Right Side Negative Space) -->
+  <div id="wisp-dialog" class="fixed right-4 sm:right-8 bottom-24 sm:bottom-28 z-20 max-w-xs w-[88vw] sm:w-80 bg-walnut/90 backdrop-blur-md p-4 rounded-2xl gold-frame transition-all duration-300 transform translate-y-2 opacity-95">
+    <div class="flex items-start justify-between gap-2 mb-1.5">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-300 shadow-[0_0_10px_#fcd34d]"></span>
+        <span class="font-cinzel text-xs font-bold tracking-widest text-goldbright uppercase">Aurelia &bull; Archive Familiar</span>
+      </div>
+      <button onclick="cycleFamiliarTip()" class="text-xs font-code text-gold hover:text-goldbright underline">
+        Next Lore ↻
+      </button>
+    </div>
+    <p id="wisp-text" class="text-sm sm:text-base text-parchment/95 leading-snug italic">
+      "Welcome, traveler. Centuries of arcane engineering rest within the tome before you. Click the grimoire—or click my orb—to explore."
+    </p>
+    <div class="mt-2.5 pt-2 border-t border-gold/20 flex items-center justify-between text-[11px] font-code text-gold/80">
+      <span>Move cursor to look around</span>
+      <button onclick="openChapter(0)" class="text-goldbright hover:underline font-semibold">Open Tome →</button>
+    </div>
+  </div>
+
+  <!-- Interactive Open Grimoire Modal Overlay (Triggered when clicking 3D Tome or Nav) -->
+  <div id="grimoire-modal" class="fixed inset-0 z-30 hidden items-center justify-center p-3 sm:p-6 md:p-10 bg-black/65 backdrop-blur-sm transition-opacity duration-300">
+    <div class="relative w-full max-w-5xl max-h-[88vh] rounded-2xl parchment-sheet border-4 border-deepbrown flex flex-col overflow-hidden">
+      
+      <!-- Decorative Corner Runes -->
+      <div class="bg-walnut text-goldbright px-5 py-3.5 flex items-center justify-between border-b-2 border-gold/60">
+        <div class="flex items-center gap-3">
+          <span class="text-goldbright text-lg">❖</span>
+          <div>
+            <span id="modal-chapter-num" class="font-code text-xs uppercase tracking-widest text-gold/80 block">
+              FOLIO I OF IV
+            </span>
+            <h2 id="modal-chapter-title" class="font-cinzel text-base sm:text-xl font-bold tracking-wider text-goldbright">
+              THE KEEPER OF THE ARCHIVES
+            </h2>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="prevChapter()" class="px-3 py-1.5 rounded-lg bg-deepbrown hover:bg-coffee text-parchment font-cinzel text-xs tracking-wider border border-gold/30 transition">
+            ◀ Prev
+          </button>
+          <button onclick="nextChapter()" class="px-3 py-1.5 rounded-lg bg-deepbrown hover:bg-coffee text-parchment font-cinzel text-xs tracking-wider border border-gold/30 transition">
+            Next ▶
+          </button>
+          <button onclick="closeGrimoire()" class="ml-2 px-3 py-1.5 rounded-lg bg-red-950/80 hover:bg-red-900 text-parchment font-cinzel text-xs tracking-wider border border-gold/30 transition">
+            ✕ Seal Tome
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Parchment Content Area -->
+      <div id="grimoire-content" class="p-6 sm:p-8 md:p-10 overflow-y-auto parchment-scroll selectable-text space-y-6 text-walnut">
+        <!-- Populated via JavaScript -->
+      </div>
+
+      <!-- Bottom Grimoire Page Footer -->
+      <div class="bg-parchmentdark/90 px-6 py-2.5 border-t border-coffee/30 flex items-center justify-between text-xs font-cinzel text-deepbrown">
+        <span>ARCHIVE CODEX &bull; EDITION MMXXVI</span>
+        <div class="flex gap-2">
+          <button onclick="openChapter(0)" class="hover:underline font-bold">I</button>
+          <span>&bull;</span>
+          <button onclick="openChapter(1)" class="hover:underline font-bold">II</button>
+          <span>&bull;</span>
+          <button onclick="openChapter(2)" class="hover:underline font-bold">III</button>
+          <span>&bull;</span>
+          <button onclick="openChapter(3)" class="hover:underline font-bold">IV</button>
+        </div>
+        <span id="page-folio-label">Page 1 / 4</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Status Bar -->
+  <footer class="fixed bottom-3 left-4 sm:left-8 z-10 pointer-events-none hidden sm:flex items-center gap-4 text-xs font-code text-gold/75 bg-walnut/75 backdrop-blur-sm px-4 py-1.5 rounded-full border border-gold/25">
+    <span>3D WEBGL ARCHIVE</span>
+    <span>•</span>
+    <span id="coords-readout">CAMERA: 0.00, 0.00</span>
+    <span>•</span>
+    <span>CLICK TOME OR FAMILIAR TO INTERACT</span>
+  </footer>
+
+  <!-- Custom Notification Toast (Replaces alert) -->
+  <div id="toast-box" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 hidden bg-walnut text-goldbright px-6 py-3 rounded-xl gold-frame font-cinzel text-sm tracking-wider shadow-2xl">
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. PORTFOLIO LORE & GRIMOIRE CHAPTER DATA
+    // =========================================================================
+    const CHAPTERS = [
+      {
+        folio: "FOLIO I OF IV",
+        title: "THE KEEPER OF THE ARCHIVES",
+        html: `
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            <div class="md:col-span-2 space-y-4">
+              <p class="text-xs font-code uppercase tracking-widest text-coffee font-semibold">
+                // Archmage of Full-Stack Architecture &amp; Interactive Worlds
+              </p>
+              <h3 class="font-cinzel text-2xl sm:text-3xl font-bold text-walnut leading-snug">
+                Crafting Resilient Systems &amp; Immersive Digital Realms
+              </h3>
+              <p class="text-lg sm:text-xl leading-relaxed text-deepbrown">
+                Hidden deep within the citadel of modern software engineering, I bridge the gap between high-performance backend alchemy and tactile, cinematic WebGL interfaces. With over 7 years of forging distributed architectures, real-time 3D web experiences, and AI-augmented tools, every line of code is inscribed with precision and intent.
+              </p>
+              <p class="text-lg leading-relaxed text-deepbrown">
+                Whether sculpting procedural shaders in Three.js, architecting low-latency cloud APIs, or designing intuitive developer tooling, my craft turns complex technical spells into effortless user experiences.
+              </p>
+            </div>
+
+            <div class="bg-walnut/10 border border-coffee/30 rounded-xl p-5 space-y-4">
+              <h4 class="font-cinzel text-sm font-bold uppercase tracking-widest text-walnut border-b border-coffee/30 pb-2">
+                Arcane Disciplines
+              </h4>
+              <div class="space-y-3 font-code text-xs">
+                <div>
+                  <div class="flex justify-between font-semibold mb-1">
+                    <span>TypeScript / React / Next.js</span>
+                    <span>96%</span>
+                  </div>
+                  <div class="w-full h-2 bg-coffee/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-walnut w-[96%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between font-semibold mb-1">
+                    <span>Three.js / WebGL / GLSL</span>
+                    <span>92%</span>
+                  </div>
+                  <div class="w-full h-2 bg-coffee/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-coffee w-[92%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between font-semibold mb-1">
+                    <span>Node.js / Rust / Go</span>
+                    <span>89%</span>
+                  </div>
+                  <div class="w-full h-2 bg-coffee/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-walnut w-[89%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between font-semibold mb-1">
+                    <span>AI Agents &amp; Vector Systems</span>
+                    <span>90%</span>
+                  </div>
+                  <div class="w-full h-2 bg-coffee/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-coffee w-[90%]"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-coffee/25">
+            <div class="p-4 rounded-xl bg-walnut/5 border border-coffee/20 text-center">
+              <div class="font-cinzel text-2xl font-bold text-walnut">48+</div>
+              <div class="text-xs font-code uppercase text-coffee mt-1">Artifacts Forged</div>
+            </div>
+            <div class="p-4 rounded-xl bg-walnut/5 border border-coffee/20 text-center">
+              <div class="font-cinzel text-2xl font-bold text-walnut">7+ Yrs</div>
+              <div class="text-xs font-code uppercase text-coffee mt-1">Arcane Mastery</div>
+            </div>
+            <div class="p-4 rounded-xl bg-walnut/5 border border-coffee/20 text-center">
+              <div class="font-cinzel text-2xl font-bold text-walnut">99.98%</div>
+              <div class="text-xs font-code uppercase text-coffee mt-1">Citadel Uptime</div>
+            </div>
+            <div class="p-4 rounded-xl bg-walnut/5 border border-coffee/20 text-center">
+              <div class="font-cinzel text-2xl font-bold text-walnut">14k★</div>
+              <div class="text-xs font-code uppercase text-coffee mt-1">Open Source Stars</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        folio: "FOLIO II OF IV",
+        title: "ARCANE ARTIFACTS & RELICS",
+        html: `
+          <div class="space-y-4">
+            <p class="text-lg text-deepbrown">
+              Selected works preserved within the vault—each engineered for speed, aesthetic depth, and enduring utility.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <!-- Artifact 1 -->
+              <div class="p-5 rounded-xl bg-walnut/10 border border-coffee/35 hover:border-walnut transition flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-code text-xs px-2.5 py-0.5 rounded bg-walnut text-goldbright">RELIC #01</span>
+                    <span class="font-code text-xs text-coffee">WebGL &bull; Rust &bull; WASM</span>
+                  </div>
+                  <h4 class="font-cinzel text-xl font-bold text-walnut mb-2">AetherEngine 3D</h4>
+                  <p class="text-base text-deepbrown leading-relaxed">
+                    A browser-native spatial scene graph and procedural terrain generator compiled to WebAssembly, capable of rendering 1M+ instanced foliage meshes at 60 FPS.
+                  </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-coffee/20 flex items-center justify-between">
+                  <span class="font-code text-xs text-coffee">MIT License &bull; 4.2k Stars</span>
+                  <button onclick="showToast('Inspecting AetherEngine 3D Blueprint...')" class="font-cinzel text-xs font-bold text-walnut hover:underline">
+                    Examine Relic →
+                  </button>
+                </div>
+              </div>
+
+              <!-- Artifact 2 -->
+              <div class="p-5 rounded-xl bg-walnut/10 border border-coffee/35 hover:border-walnut transition flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-code text-xs px-2.5 py-0.5 rounded bg-walnut text-goldbright">RELIC #02</span>
+                    <span class="font-code text-xs text-coffee">TypeScript &bull; LLM &bull; GraphQL</span>
+                  </div>
+                  <h4 class="font-cinzel text-xl font-bold text-walnut mb-2">CodexOracle AI</h4>
+                  <p class="text-base text-deepbrown leading-relaxed">
+                    An autonomous codebase cartographer that indexes multi-repository ASTs into semantic knowledge graphs, answering architectural queries with cited lineage.
+                  </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-coffee/20 flex items-center justify-between">
+                  <span class="font-code text-xs text-coffee">Enterprise SaaS &bull; v3.4</span>
+                  <button onclick="showToast('Summoning CodexOracle Live Sandbox...')" class="font-cinzel text-xs font-bold text-walnut hover:underline">
+                    Examine Relic →
+                  </button>
+                </div>
+              </div>
+
+              <!-- Artifact 3 -->
+              <div class="p-5 rounded-xl bg-walnut/10 border border-coffee/35 hover:border-walnut transition flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-code text-xs px-2.5 py-0.5 rounded bg-walnut text-goldbright">RELIC #03</span>
+                    <span class="font-code text-xs text-coffee">Go &bull; Redis &bull; WebSockets</span>
+                  </div>
+                  <h4 class="font-cinzel text-xl font-bold text-walnut mb-2">ChronoSync Mesh</h4>
+                  <p class="text-base text-deepbrown leading-relaxed">
+                    Ultra-low-latency CRDT state synchronization engine powering collaborative multiplayer whiteboards and real-time strategy simulations across global edge nodes.
+                  </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-coffee/20 flex items-center justify-between">
+                  <span class="font-code text-xs text-coffee">&lt;14ms Global P99</span>
+                  <button onclick="showToast('Opening ChronoSync Benchmark Scroll...')" class="font-cinzel text-xs font-bold text-walnut hover:underline">
+                    Examine Relic →
+                  </button>
+                </div>
+              </div>
+
+              <!-- Artifact 4 -->
+              <div class="p-5 rounded-xl bg-walnut/10 border border-coffee/35 hover:border-walnut transition flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-code text-xs px-2.5 py-0.5 rounded bg-walnut text-goldbright">RELIC #04</span>
+                    <span class="font-code text-xs text-coffee">GLSL &bull; WebAudio &bull; React</span>
+                  </div>
+                  <h4 class="font-cinzel text-xl font-bold text-walnut mb-2">GrimoireSynth Studio</h4>
+                  <p class="text-base text-deepbrown leading-relaxed">
+                    Node-based modular synthesizer and procedural shader playground allowing digital artists to bind harmonic frequencies directly to raymarched 3D fractals.
+                  </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-coffee/20 flex items-center justify-between">
+                  <span class="font-code text-xs text-coffee">Awwwards Honoree</span>
+                  <button onclick="showToast('Initializing GrimoireSynth Oscillators...')" class="font-cinzel text-xs font-bold text-walnut hover:underline">
+                    Examine Relic →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        folio: "FOLIO III OF IV",
+        title: "CHRONICLES OF SERVICE",
+        html: `
+          <div class="space-y-6">
+            <p class="text-lg text-deepbrown">
+              A historical ledger of guilds served, systems architected, and technological milestones achieved.
+            </p>
+            <div class="relative border-l-2 border-coffee/50 ml-3 pl-6 space-y-7">
+              <div class="relative">
+                <span class="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-walnut border-2 border-goldbright"></span>
+                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                  <h4 class="font-cinzel text-xl font-bold text-walnut">Principal Creative Technologist</h4>
+                  <span class="font-code text-xs px-2.5 py-0.5 rounded bg-walnut/15 text-walnut font-semibold">2023 — PRESENT</span>
+                </div>
+                <div class="font-cinzel text-sm font-semibold text-coffee mb-2">Obsidian Spire Interactive</div>
+                <p class="text-base text-deepbrown leading-relaxed">
+                  Spearheading 3D web platforms, spatial product configurators, and AI-assisted design pipelines. Reduced WebGL bundle payloads by 62% while elevating visual fidelity across mobile and desktop viewports.
+                </p>
+              </div>
+
+              <div class="relative">
+                <span class="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-coffee border-2 border-parchment"></span>
+                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                  <h4 class="font-cinzel text-xl font-bold text-walnut">Senior Full-Stack Architect</h4>
+                  <span class="font-code text-xs px-2.5 py-0.5 rounded bg-walnut/15 text-walnut font-semibold">2020 — 2023</span>
+                </div>
+                <div class="font-cinzel text-sm font-semibold text-coffee mb-2">AetherCloud Systems</div>
+                <p class="text-base text-deepbrown leading-relaxed">
+                  Designed event-driven microservices handling 45,000+ concurrent telemetry streams. Mentored a guild of 14 engineers and authored the company's unified design system.
+                </p>
+              </div>
+
+              <div class="relative">
+                <span class="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-coffee border-2 border-parchment"></span>
+                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                  <h4 class="font-cinzel text-xl font-bold text-walnut">Interactive Frontend Engineer</h4>
+                  <span class="font-code text-xs px-2.5 py-0.5 rounded bg-walnut/15 text-walnut font-semibold">2018 — 2020</span>
+                </div>
+                <div class="font-cinzel text-sm font-semibold text-coffee mb-2">Silverquill Digital</div>
+                <p class="text-base text-deepbrown leading-relaxed">
+                  Built bespoke editorial storytelling experiences, custom canvas data visualizations, and accessible web applications for cultural institutions and publishing houses.
+                </p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        folio: "FOLIO IV OF IV",
+        title: "THE SUMMONING SCROLL",
+        html: `
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
+            <div class="md:col-span-2 space-y-4">
+              <h3 class="font-cinzel text-2xl font-bold text-walnut">Dispatch a Raven</h3>
+              <p class="text-base text-deepbrown leading-relaxed">
+                Seeking an architect for an ambitious web application, interactive 3D showcase, or technical advisory? Inscribe your message upon the parchment and dispatch it directly to the Keeper's study.
+              </p>
+              <div class="p-4 rounded-xl bg-walnut/10 border border-coffee/30 space-y-2.5 font-code text-xs text-walnut">
+                <div><strong>CITADEL:</strong> Remote / Worldwide</div>
+                <div><strong>OWL POST:</strong> keeper@forgottenarchives.dev</div>
+                <div><strong>GITHUB:</strong> github.com/arcane-keeper</div>
+                <div><strong>STATUS:</strong> <span class="text-emerald-900 font-bold">● Available for Select Quests</span></div>
+              </div>
+            </div>
+
+            <form onsubmit="handleSummonSubmit(event)" class="md:col-span-3 space-y-4 bg-walnut/5 p-5 rounded-xl border border-coffee/25">
+              <div>
+                <label class="block font-cinzel text-xs font-bold uppercase tracking-wider text-walnut mb-1">Your Name or Guild</label>
+                <input type="text" required placeholder="e.g. Lyra Vance — Astral Labs"
+                  class="w-full px-3.5 py-2.5 rounded-lg bg-parchment border border-coffee/40 text-walnut placeholder-coffee/60 focus:outline-none focus:border-walnut font-garamond text-base" />
+              </div>
+              <div>
+                <label class="block font-cinzel text-xs font-bold uppercase tracking-wider text-walnut mb-1">Return Sigil (Email)</label>
+                <input type="email" required placeholder="lyra@astrallabs.io"
+                  class="w-full px-3.5 py-2.5 rounded-lg bg-parchment border border-coffee/40 text-walnut placeholder-coffee/60 focus:outline-none focus:border-walnut font-garamond text-base" />
+              </div>
+              <div>
+                <label class="block font-cinzel text-xs font-bold uppercase tracking-wider text-walnut mb-1">Nature of the Quest</label>
+                <textarea rows="3" required placeholder="Describe your vision, timeline, or arcane technical challenge..."
+                  class="w-full px-3.5 py-2.5 rounded-lg bg-parchment border border-coffee/40 text-walnut placeholder-coffee/60 focus:outline-none focus:border-walnut font-garamond text-base"></textarea>
+              </div>
+              <button type="submit"
+                class="w-full py-3 rounded-xl bg-walnut hover:bg-deepbrown text-goldbright font-cinzel text-sm font-bold tracking-widest uppercase border border-gold/50 shadow-lg transition cursor-pointer">
+                ✦ Seal &amp; Dispatch Scroll ✦
+              </button>
+            </form>
+          </div>
+        `
+      }
+    ];
+
+    const FAMILIAR_LORE = [
+      "\"Welcome, traveler. Centuries of arcane engineering rest within the tome before you. Click the grimoire—or click my orb—to explore.\"",
+      "\"Notice the golden motes drifting in the cathedral shafts? Each carries residual aether from compiled shaders and ancient algorithms.\"",
+      "\"The Keeper specializes in Three.js, TypeScript, and resilient distributed systems. Open Folio II to inspect the Arcane Artifacts.\"",
+      "\"Tip: Drag gently across the library or move your cursor to peer deeper into the shadowed walnut bookshelves.\"",
+      "\"Have a daring project in mind? Open Folio IV to inscribe a Summoning Scroll directly to the Keeper's desk.\""
+    ];
+
+    let currentChapter = 0;
+    let currentLoreIndex = 0;
+    let isGrimoireOpen = false;
+    let highMagicMode = true;
+
+    // =========================================================================
+    // 2. PROCEDURAL TEXTURE GENERATORS (NO EXTERNAL IMAGES NEEDED)
+    // =========================================================================
+    function createWalnutWoodTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+
+      // Base dark walnut (#21150F -> #38251B)
+      const grad = ctx.createLinearGradient(0, 0, 1024, 1024);
+      grad.addColorStop(0, '#21150F');
+      grad.addColorStop(0.5, '#332016');
+      grad.addColorStop(1, '#1d120c');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      // Organic wood grain fibers
+      for (let i = 0; i < 420; i++) {
+        const y = Math.random() * 1024;
+        const thickness = 1 + Math.random() * 3.5;
+        ctx.strokeStyle = i % 3 === 0 ? 'rgba(18, 10, 6, 0.42)' : 'rgba(118, 81, 57, 0.16)';
+        ctx.lineWidth = thickness;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        let currentY = y;
+        for (let x = 0; x <= 1024; x += 64) {
+          currentY += (Math.random() - 0.5) * 6;
+          ctx.lineTo(x, currentY);
+        }
+        ctx.stroke();
+      }
+
+      // Subtle knots & antique wear
+      for (let k = 0; k < 14; k++) {
+        const kx = Math.random() * 1024;
+        const ky = Math.random() * 1024;
+        const rx = 18 + Math.random() * 45;
+        const ry = 4 + Math.random() * 10;
+        ctx.strokeStyle = 'rgba(15, 8, 5, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(kx, ky, rx, ry, (Math.random() - 0.5) * 0.2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(2, 2);
+      return tex;
+    }
+
+    function createStoneTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#1d1a18';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Stone blocks
+      const rows = 8;
+      const rowH = 512 / rows;
+      for (let r = 0; r < rows; r++) {
+        const cols = 4;
+        const colW = 512 / cols;
+        const offset = (r % 2) * (colW / 2);
+        for (let c = -1; c <= cols; c++) {
+          const x = c * colW + offset;
+          const y = r * rowH;
+          const shade = 24 + Math.floor(Math.random() * 16);
+          ctx.fillStyle = `rgb(${shade + 4}, ${shade + 1}, ${shade - 2})`;
+          ctx.fillRect(x + 2, y + 2, colW - 4, rowH - 4);
+        }
+      }
+
+      // Subtle noise speckles
+      for (let i = 0; i < 3000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,245,230,0.03)' : 'rgba(0,0,0,0.22)';
+        ctx.fillRect(x, y, 2, 2);
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(3, 3);
+      return tex;
+    }
+
+    function createGrimoireCoverTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Deep embossed leather
+      ctx.fillStyle = '#2b160e';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Leather grain
+      for (let i = 0; i < 2500; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(118,81,57,0.12)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+      }
+
+      // Antique gold filigree border
+      ctx.strokeStyle = '#B49A62';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(24, 24, 464, 464);
+
+      ctx.lineWidth = 3;
+      ctx.strokeRect(42, 42, 428, 428);
+
+      // Center arcane astrolabe sigil
+      ctx.save();
+      ctx.translate(256, 256);
+      ctx.strokeStyle = '#E5C67E';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 110, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 88, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Star polygon
+      for (let rot = 0; rot < 2; rot++) {
+        ctx.save();
+        ctx.rotate((rot * Math.PI) / 4);
+        ctx.strokeRect(-65, -65, 130, 130);
+        ctx.restore();
+      }
+
+      // Center jewel glow
+      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 36);
+      glow.addColorStop(0, '#FFF3C4');
+      glow.addColorStop(0.5, '#B49A62');
+      glow.addColorStop(1, 'rgba(180,154,98,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, 36, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function createParchmentPageTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(256, 256, 40, 256, 256, 360);
+      grad.addColorStop(0, '#F5E9D0');
+      grad.addColorStop(1, '#D6BE92');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Simulated illuminated manuscript lines & runes
+      ctx.fillStyle = 'rgba(56, 37, 27, 0.55)';
+      for (let y = 70; y < 440; y += 22) {
+        const lineW = 280 + Math.sin(y) * 70;
+        ctx.fillRect(65, y, lineW, 4);
+      }
+
+      // Gold illuminated initial box
+      ctx.fillStyle = '#B49A62';
+      ctx.fillRect(65, 65, 58, 58);
+      ctx.strokeStyle = '#38251B';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(65, 65, 58, 58);
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function createParticleTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, 'rgba(255, 244, 200, 1)');
+      grad.addColorStop(0.35, 'rgba(229, 198, 126, 0.75)');
+      grad.addColorStop(1, 'rgba(180, 154, 98, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // =========================================================================
+    // 3. THREE.JS 3D SCENE: "THE FORGOTTEN ARCHIVES"
+    // =========================================================================
+    let scene, camera, renderer, raycaster, mouse;
+    let deskGroup, grimoireGroup, grimoireCoverPivot, wispGroup, wispOrb, wispRing1, wispRing2;
+    let candleLight, deskCandleLight, wispLight, candleFlameMesh;
+    let dustParticles, dustVelocities = [];
+    let godRays = [];
+    let clock = new THREE.Clock();
+
+    // Camera parallax state
+    let targetCamX = 0;
+    let targetCamY = 1.65;
+    let isDragging = false;
+    let prevMouseX = 0;
+    let prevMouseY = 0;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    // Interactive hover state
+    let hoveredObject = null;
+
+    function initScene() {
+      const container = document.getElementById('canvas-container');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color('#120a06');
+      scene.fog = new THREE.FogExp2('#160d08', 0.048);
+
+      camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 80);
+      camera.position.set(0, 1.65, 4.4);
+      camera.lookAt(0, 1.05, -1.5);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      container.appendChild(renderer.domElement);
+
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      const walnutTex = createWalnutWoodTexture();
+      const stoneTex = createStoneTexture();
+      const coverTex = createGrimoireCoverTexture();
+      const pageTex = createParchmentPageTexture();
+
+      // Shared Materials
+      const walnutMat = new THREE.MeshStandardMaterial({
+        map: walnutTex,
+        color: 0x3a2419,
+        roughness: 0.42,
+        metalness: 0.08,
+      });
+
+      const darkWalnutMat = new THREE.MeshStandardMaterial({
+        map: walnutTex,
+        color: 0x21150f,
+        roughness: 0.55,
+        metalness: 0.05,
+      });
+
+      const stoneMat = new THREE.MeshStandardMaterial({
+        map: stoneTex,
+        color: 0x2c2622,
+        roughness: 0.85,
+        metalness: 0.05,
+      });
+
+      const antiqueGoldMat = new THREE.MeshStandardMaterial({
+        color: 0xb49a62,
+        roughness: 0.28,
+        metalness: 0.85,
+      });
+
+      // -----------------------------------------------------------------------
+      // LIGHTING: Warm Candlelight, Moonlit Cathedral Rays, Ambient Fill
+      // -----------------------------------------------------------------------
+      const ambientLight = new THREE.AmbientLight(0x3a2618, 0.85);
+      scene.add(ambientLight);
+
+      // Cool/silvery-gold high gothic window directional light
+      const windowLight = new THREE.DirectionalLight(0xd9cbb0, 1.15);
+      windowLight.position.set(4.5, 9, -4);
+      windowLight.castShadow = true;
+      windowLight.shadow.mapSize.width = 1024;
+      windowLight.shadow.mapSize.height = 1024;
+      scene.add(windowLight);
+
+      // Warm foreground candle light on left of desk
+      deskCandleLight = new THREE.PointLight(0xff9d3b, 2.4, 7.5, 1.6);
+      deskCandleLight.position.set(-1.35, 1.25, 2.25);
+      deskCandleLight.castShadow = true;
+      scene.add(deskCandleLight);
+
+      // Subtle warm center-desk fill so the empty center / tome gleams beautifully
+      const centerSpot = new THREE.SpotLight(0xffcf7d, 1.35, 9, Math.PI / 4, 0.6, 1.2);
+      centerSpot.position.set(0.2, 3.6, 2.6);
+      centerSpot.target.position.set(0, 0.8, 2.1);
+      scene.add(centerSpot);
+      scene.add(centerSpot.target);
+
+      // Deep archive lantern lights
+      const backLantern1 = new THREE.PointLight(0xe68a2e, 2.2, 12, 1.5);
+      backLantern1.position.set(-3.4, 2.8, -4.5);
+      scene.add(backLantern1);
+
+      const backLantern2 = new THREE.PointLight(0xe68a2e, 2.2, 12, 1.5);
+      backLantern2.position.set(3.4, 2.8, -6.5);
+      scene.add(backLantern2);
+
+      // -----------------------------------------------------------------------
+      // ARCHITECTURE: Floor, Stone Pillars, Vaulted Arches, Bookshelves
+      // -----------------------------------------------------------------------
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(28, 34), darkWalnutMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.8;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      // Back wall
+      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(28, 16), stoneMat);
+      backWall.position.set(0, 6, -15);
+      scene.add(backWall);
+
+      // Stone Pillars & Gothic Arches along left and right corridors
+      for (let z = -12; z <= 1; z += 4.2) {
+        [-4.6, 4.6].forEach((x) => {
+          const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.75, 9, 0.75), stoneMat);
+          pillar.position.set(x, 3.5, z);
+          pillar.castShadow = true;
+          pillar.receiveShadow = true;
+          scene.add(pillar);
+
+          // Pillar capital
+          const cap = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.35, 1.0), stoneMat);
+          cap.position.set(x, 5.8, z);
+          scene.add(cap);
+        });
+
+        // Overhead timber beam
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(10.2, 0.42, 0.48), darkWalnutMat);
+        beam.position.set(0, 6.2, z);
+        scene.add(beam);
+      }
+
+      // Towering Dark-Walnut Bookshelves
+      const bookColors = [0x4a1e16, 0x2b3a2e, 0x5c3818, 0x1f2838, 0x69291d, 0x3b281c, 0x765139];
+      const bookMats = bookColors.map(
+        (hex) => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.75, metalness: 0.05 })
+      );
+
+      function buildBookshelf(x, y, z, rotY, width = 3.2, height = 5.4, shelves = 6) {
+        const shelfGroup = new THREE.Group();
+        shelfGroup.position.set(x, y, z);
+        shelfGroup.rotation.y = rotY;
+
+        // Frame back & sides
+        const back = new THREE.Mesh(new THREE.BoxGeometry(width, height, 0.15), darkWalnutMat);
+        back.position.z = -0.25;
+        shelfGroup.add(back);
+
+        const leftSide = new THREE.Mesh(new THREE.BoxGeometry(0.16, height, 0.6), walnutMat);
+        leftSide.position.x = -width / 2;
+        shelfGroup.add(leftSide);
+
+        const rightSide = new THREE.Mesh(new THREE.BoxGeometry(0.16, height, 0.6), walnutMat);
+        rightSide.position.x = width / 2;
+        shelfGroup.add(rightSide);
+
+        // Crown molding
+        const crown = new THREE.Mesh(new THREE.BoxGeometry(width + 0.3, 0.25, 0.75), walnutMat);
+        crown.position.y = height / 2 + 0.1;
+        shelfGroup.add(crown);
+
+        const stepY = (height - 0.6) / shelves;
+        for (let s = 0; s <= shelves; s++) {
+          const sy = -height / 2 + 0.3 + s * stepY;
+          const plank = new THREE.Mesh(new THREE.BoxGeometry(width, 0.1, 0.58), walnutMat);
+          plank.position.y = sy;
+          shelfGroup.add(plank);
+
+          // Populate shelf with ancient books
+          if (s < shelves) {
+            let cursorX = -width / 2 + 0.22;
+            while (cursorX < width / 2 - 0.25) {
+              if (Math.random() < 0.12) {
+                cursorX += 0.18; // gap
+                continue;
+              }
+              const bw = 0.07 + Math.random() * 0.08;
+              const bh = stepY * (0.62 + Math.random() * 0.26);
+              const bd = 0.34 + Math.random() * 0.1;
+              const mat = bookMats[Math.floor(Math.random() * bookMats.length)];
+              const book = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat);
+              book.position.set(cursorX + bw / 2, sy + 0.05 + bh / 2, 0.02);
+              book.rotation.z = (Math.random() - 0.5) * 0.05;
+              shelfGroup.add(book);
+
+              // Occasional gold spine band
+              if (Math.random() > 0.55) {
+                const band = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.006, 0.025, bd + 0.006), antiqueGoldMat);
+                band.position.set(book.position.x, book.position.y + bh * 0.25, 0.02);
+                shelfGroup.add(band);
+              }
+
+              cursorX += bw + 0.015;
+            }
+          }
+        }
+
+        scene.add(shelfGroup);
+      }
+
+      // Place bookshelves along left, right, and deep background
+      buildBookshelf(-3.7, 1.9, -1.5, Math.PI / 2.4, 3.4, 5.4, 6);
+      buildBookshelf(-3.9, 1.9, -5.6, Math.PI / 2.2, 3.4, 5.4, 6);
+      buildBookshelf(3.9, 1.9, -2.2, -Math.PI / 2.3, 3.4, 5.4, 6);
+      buildBookshelf(3.8, 1.9, -6.5, -Math.PI / 2.1, 3.4, 5.4, 6);
+
+      // Deep background shelves
+      buildBookshelf(-2.2, 1.9, -11.5, 0.12, 3.6, 5.6, 6);
+      buildBookshelf(2.1, 1.9, -12.2, -0.1, 3.6, 5.6, 6);
+      buildBookshelf(0, 2.2, -14.2, 0, 4.2, 6.0, 6);
+
+      // -----------------------------------------------------------------------
+      // VOLUMETRIC GOD RAYS FROM HIGH CATHEDRAL WINDOWS
+      // -----------------------------------------------------------------------
+      const rayMat = new THREE.MeshBasicMaterial({
+        color: 0xe8d5a7,
+        transparent: true,
+        opacity: 0.045,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+
+      for (let i = 0; i < 3; i++) {
+        const coneGeo = new THREE.ConeGeometry(1.8 + i * 0.4, 11, 24, 1, true);
+        const rayMesh = new THREE.Mesh(coneGeo, rayMat);
+        rayMesh.position.set(1.6 + i * 0.8, 4.2, -4.5 - i * 2.2);
+        rayMesh.rotation.z = 0.42;
+        rayMesh.rotation.x = 0.15;
+        scene.add(rayMesh);
+        godRays.push(rayMesh);
+      }
+
+      // -----------------------------------------------------------------------
+      // FOREGROUND: GRAND ANTIQUE DARK-WALNUT STUDY DESK
+      // -----------------------------------------------------------------------
+      deskGroup = new THREE.Group();
+      deskGroup.position.set(0, 0, 2.15);
+      scene.add(deskGroup);
+
+      // Main desktop slab (spans horizontally across lower foreground)
+      const deskTop = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.16, 1.85), walnutMat);
+      deskTop.position.set(0, 0.72, 0);
+      deskTop.castShadow = true;
+      deskTop.receiveShadow = true;
+      deskGroup.add(deskTop);
+
+      // Beveled front molding edge
+      const frontTrim = new THREE.Mesh(new THREE.BoxGeometry(5.92, 0.09, 0.08), darkWalnutMat);
+      frontTrim.position.set(0, 0.71, 0.94);
+      deskGroup.add(frontTrim);
+
+      // Desk apron & drawers beneath
+      const deskBody = new THREE.Mesh(new THREE.BoxGeometry(5.3, 1.4, 1.55), darkWalnutMat);
+      deskBody.position.set(0, -0.05, -0.05);
+      deskGroup.add(deskBody);
+
+      // Three front drawer panels with antique brass handles
+      [-1.75, 0, 1.75].forEach((dx) => {
+        const drawerFace = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.34, 0.05), walnutMat);
+        drawerFace.position.set(dx, 0.42, 0.74);
+        deskGroup.add(drawerFace);
+
+        const handle = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.014, 8, 20), antiqueGoldMat);
+        handle.position.set(dx, 0.42, 0.78);
+        deskGroup.add(handle);
+      });
+
+      // --- LEFT DESK PROPS: Candle, Brass Holder, Stacked Tomes & Quill ---
+      const candleGroup = new THREE.Group();
+      candleGroup.position.set(-1.35, 0.8, 0.05);
+      deskGroup.add(candleGroup);
+
+      const brassDish = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.03, 24), antiqueGoldMat);
+      candleGroup.add(brassDish);
+
+      const waxMat = new THREE.MeshStandardMaterial({
+        color: 0xf5e8c8,
+        roughness: 0.35,
+        emissive: 0x3b1f06,
+        emissiveIntensity: 0.35,
+      });
+      const candleBody = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.062, 0.32, 20), waxMat);
+      candleBody.position.y = 0.17;
+      candleGroup.add(candleBody);
+
+      const flameMat = new THREE.MeshBasicMaterial({ color: 0xffd275 });
+      candleFlameMesh = new THREE.Mesh(new THREE.SphereGeometry(0.028, 12, 12), flameMat);
+      candleFlameMesh.scale.set(0.7, 1.65, 0.7);
+      candleFlameMesh.position.y = 0.37;
+      candleGroup.add(candleFlameMesh);
+
+      // Stacked books on far left
+      const leftBook1 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.09, 0.42), bookMats[0]);
+      leftBook1.position.set(-1.78, 0.845, -0.05);
+      leftBook1.rotation.y = 0.22;
+      deskGroup.add(leftBook1);
+
+      const leftBook2 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.38), bookMats[2]);
+      leftBook2.position.set(-1.76, 0.93, -0.04);
+      leftBook2.rotation.y = -0.15;
+      deskGroup.add(leftBook2);
+
+      // Inkwell on left
+      const inkwell = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.09, 16), antiqueGoldMat);
+      inkwell.position.set(-1.65, 0.845, 0.32);
+      deskGroup.add(inkwell);
+
+      // --- RIGHT DESK PROP: Antique Brass Astrolabe / Orrery Ring ---
+      const astrolabeGroup = new THREE.Group();
+      astrolabeGroup.position.set(1.62, 0.8, -0.1);
+      deskGroup.add(astrolabeGroup);
+
+      const astroBase = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.04, 24), antiqueGoldMat);
+      astrolabeGroup.add(astroBase);
+
+      const astroStem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.22, 12), antiqueGoldMat);
+      astroStem.position.y = 0.12;
+      astrolabeGroup.add(astroStem);
+
+      const astroOuterRing = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.015, 12, 32), antiqueGoldMat);
+      astroOuterRing.position.y = 0.28;
+      astroOuterRing.rotation.y = 0.4;
+      astrolabeGroup.add(astroOuterRing);
+
+      const astroInnerRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.012, 12, 32), antiqueGoldMat);
+      astroInnerRing.position.y = 0.28;
+      astroInnerRing.rotation.x = 0.65;
+      astrolabeGroup.add(astroInnerRing);
+
+      // -----------------------------------------------------------------------
+      // CENTERPIECE: INTERACTIVE 3D DEVELOPER GRIMOIRE ON THE DESK
+      // -----------------------------------------------------------------------
+      grimoireGroup = new THREE.Group();
+      grimoireGroup.position.set(0, 0.805, 0.15);
+      grimoireGroup.rotation.y = -0.06;
+      deskGroup.add(grimoireGroup);
+
+      const bookWidth = 0.72;
+      const bookHeight = 0.085;
+      const bookDepth = 0.56;
+
+      const coverMat = new THREE.MeshStandardMaterial({
+        map: coverTex,
+        roughness: 0.45,
+        metalness: 0.25,
+      });
+
+      const pageBlockMat = new THREE.MeshStandardMaterial({
+        map: pageTex,
+        color: 0xf3e7ce,
+        roughness: 0.65,
+      });
+
+      // Bottom leather cover
+      const bottomCover = new THREE.Mesh(new THREE.BoxGeometry(bookWidth, 0.018, bookDepth), coverMat);
+      bottomCover.position.y = 0.009;
+      bottomCover.castShadow = true;
+      grimoireGroup.add(bottomCover);
+
+      // Parchment page block
+      const pageBlock = new THREE.Mesh(
+        new THREE.BoxGeometry(bookWidth - 0.04, bookHeight - 0.025, bookDepth - 0.04),
+        pageBlockMat
+      );
+      pageBlock.position.y = bookHeight / 2;
+      pageBlock.castShadow = true;
+      grimoireGroup.add(pageBlock);
+
+      // Hinged Top Cover (pivots open when clicked!)
+      grimoireCoverPivot = new THREE.Group();
+      grimoireCoverPivot.position.set(-bookWidth / 2, bookHeight - 0.01, 0);
+      grimoireGroup.add(grimoireCoverPivot);
+
+      const topCover = new THREE.Mesh(new THREE.BoxGeometry(bookWidth, 0.02, bookDepth), coverMat);
+      topCover.position.set(bookWidth / 2, 0.01, 0);
+      topCover.castShadow = true;
+      topCover.name = 'GRIMOIRE_TOME';
+      grimoireCoverPivot.add(topCover);
+
+      // Brass corner clasps on Grimoire
+      [
+        [bookWidth - 0.03, 0.012, bookDepth / 2 - 0.03],
+        [bookWidth - 0.03, 0.012, -bookDepth / 2 + 0.03],
+      ].forEach(([cx, cy, cz]) => {
+        const corner = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.026, 0.07), antiqueGoldMat);
+        corner.position.set(cx, cy, cz);
+        grimoireCoverPivot.add(corner);
+      });
+
+      // Tag all grimoire meshes for raycasting
+      grimoireGroup.traverse((child) => {
+        if (child.isMesh) child.userData.interactiveType = 'GRIMOIRE';
+      });
+
+      // -----------------------------------------------------------------------
+      // RIGHT NEGATIVE SPACE: FLOATING AI FAMILIAR / ARCANE WISP MASCOT
+      // -----------------------------------------------------------------------
+      wispGroup = new THREE.Group();
+      wispGroup.position.set(1.22, 1.38, 2.35);
+      scene.add(wispGroup);
+
+      // Core glowing crystal orb
+      const orbMat = new THREE.MeshStandardMaterial({
+        color: 0xfff3c4,
+        emissive: 0xffb833,
+        emissiveIntensity: 1.8,
+        roughness: 0.15,
+        metalness: 0.1,
+      });
+      wispOrb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 2), orbMat);
+      wispOrb.userData.interactiveType = 'FAMILIAR';
+      wispGroup.add(wispOrb);
+
+      // Gyroscopic antique-gold runic rings around the AI Familiar
+      wispRing1 = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.009, 10, 36), antiqueGoldMat);
+      wispRing1.userData.interactiveType = 'FAMILIAR';
+      wispGroup.add(wispRing1);
+
+      wispRing2 = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.007, 10, 36), antiqueGoldMat);
+      wispRing2.rotation.x = Math.PI / 3;
+      wispRing2.userData.interactiveType = 'FAMILIAR';
+      wispGroup.add(wispRing2);
+
+      // Soft warm point light emitted by the Familiar
+      wispLight = new THREE.PointLight(0xffc966, 1.35, 3.8, 1.8);
+      wispGroup.add(wispLight);
+
+      // -----------------------------------------------------------------------
+      // FLOATING GOLDEN MAGICAL DUST PARTICLES
+      // -----------------------------------------------------------------------
+      const particleCount = 340;
+      const particleGeo = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 11;
+        positions[i * 3 + 1] = Math.random() * 6.5 - 0.5;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 16 - 3;
+
+        dustVelocities.push({
+          x: (Math.random() - 0.5) * 0.004,
+          y: 0.002 + Math.random() * 0.005,
+          z: (Math.random() - 0.5) * 0.004,
+          phase: Math.random() * Math.PI * 2,
+        });
+      }
+
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+      const particleMat = new THREE.PointsMaterial({
+        size: 0.095,
+        map: createParticleTexture(),
+        transparent: true,
+        opacity: 0.82,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+
+      dustParticles = new THREE.Points(particleGeo, particleMat);
+      scene.add(dustParticles);
+
+      // Event Listeners
+      window.addEventListener('resize', onWindowResize);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mouseup', onMouseUp);
+      window.addEventListener('click', onCanvasClick);
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+    }
+
+    // =========================================================================
+    // 4. INTERACTION & CAMERA PARALLAX HANDLERS
+    // =========================================================================
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function onMouseMove(event) {
+      const nx = (event.clientX / window.innerWidth) * 2 - 1;
+      const ny = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      mouse.x = nx;
+      mouse.y = ny;
+
+      if (isDragging) {
+        const dx = (event.clientX - prevMouseX) * 0.0025;
+        const dy = (event.clientY - prevMouseY) * 0.002;
+        dragOffsetX = Math.max(-0.9, Math.min(0.9, dragOffsetX - dx));
+        dragOffsetY = Math.max(-0.4, Math.min(0.5, dragOffsetY + dy));
+        prevMouseX = event.clientX;
+        prevMouseY = event.clientY;
+      }
+
+      targetCamX = nx * 0.42 + dragOffsetX;
+      targetCamY = 1.65 + ny * 0.22 + dragOffsetY;
+
+      const coordsEl = document.getElementById('coords-readout');
+      if (coordsEl) {
+        coordsEl.textContent = `CAMERA: ${targetCamX.toFixed(2)}, ${targetCamY.toFixed(2)}`;
+      }
+    }
+
+    function onMouseDown(event) {
+      if (event.target.closest('#grimoire-modal') || event.target.closest('header') || event.target.closest('#wisp-dialog')) return;
+      isDragging = true;
+      prevMouseX = event.clientX;
+      prevMouseY = event.clientY;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+    }
+
+    function onTouchStart(event) {
+      if (event.touches.length === 1) {
+        prevMouseX = event.touches[0].clientX;
+        prevMouseY = event.touches[0].clientY;
+      }
+    }
+
+    function onTouchMove(event) {
+      if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        const nx = (touch.clientX / window.innerWidth) * 2 - 1;
+        const ny = -(touch.clientY / window.innerHeight) * 2 + 1;
+        targetCamX = nx * 0.35;
+        targetCamY = 1.65 + ny * 0.18;
+      }
+    }
+
+    function onCanvasClick(event) {
+      if (event.target.closest('#grimoire-modal') || event.target.closest('header') || event.target.closest('#wisp-dialog')) return;
+
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+
+      for (let i = 0; i < intersects.length; i++) {
+        const type = intersects[i].object.userData.interactiveType;
+        if (type === 'GRIMOIRE') {
+          openChapter(currentChapter);
+          break;
+        } else if (type === 'FAMILIAR') {
+          cycleFamiliarTip();
+          showToast('Aurelia whispers ancient archive wisdom...');
+          break;
+        }
+      }
+    }
+
+    // =========================================================================
+    // 5. ANIMATION LOOP
+    // =========================================================================
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const elapsed = clock.getElapsedTime();
+
+      // Smooth camera parallax interpolation
+      camera.position.x += (targetCamX - camera.position.x) * 0.045;
+      camera.position.y += (targetCamY - camera.position.y) * 0.045;
+      camera.lookAt(camera.position.x * 0.25, 1.02, -1.6);
+
+      // Flickering candle flame & warm light
+      const flicker = Math.sin(elapsed * 14) * 0.08 + Math.cos(elapsed * 23) * 0.05;
+      const intensityMultiplier = highMagicMode ? 1.0 : 0.55;
+      deskCandleLight.intensity = (2.35 + flicker * 2.2) * intensityMultiplier;
+      candleFlameMesh.scale.set(
+        0.7 + flicker * 0.35,
+        1.65 + flicker * 0.8,
+        0.7 + flicker * 0.35
+      );
+
+      // Interactive 3D Grimoire cover smooth hinge animation
+      const targetCoverAngle = isGrimoireOpen ? Math.PI * 0.82 : 0;
+      grimoireCoverPivot.rotation.z += (targetCoverAngle - grimoireCoverPivot.rotation.z) * 0.08;
+
+      // Floating AI Familiar Wisp gentle levitation & gyroscopic rotation
+      wispGroup.position.y = 1.38 + Math.sin(elapsed * 2.1) * 0.065;
+      wispGroup.position.x = 1.22 + Math.cos(elapsed * 1.4) * 0.03 + mouse.x * 0.08;
+      wispOrb.rotation.y = elapsed * 0.9;
+      wispRing1.rotation.z = elapsed * 1.1;
+      wispRing1.rotation.x = Math.sin(elapsed * 0.8) * 0.6;
+      wispRing2.rotation.y = -elapsed * 1.35;
+      wispLight.intensity = (1.35 + Math.sin(elapsed * 3.5) * 0.25) * intensityMultiplier;
+
+      // Drifting golden magical dust particles
+      const posAttr = dustParticles.geometry.attributes.position;
+      for (let i = 0; i < posAttr.count; i++) {
+        const vel = dustVelocities[i];
+        let x = posAttr.getX(i) + vel.x + Math.sin(elapsed + vel.phase) * 0.0012;
+        let y = posAttr.getY(i) + vel.y;
+        let z = posAttr.getZ(i) + vel.z;
+
+        if (y > 6.2) y = -0.4;
+        if (x > 5.5) x = -5.5;
+        if (x < -5.5) x = 5.5;
+
+        posAttr.setXYZ(i, x, y, z);
+      }
+      posAttr.needsUpdate = true;
+
+      // Subtle breathing opacity on cathedral light rays
+      godRays.forEach((ray, idx) => {
+        ray.material.opacity = (0.038 + Math.sin(elapsed * 0.8 + idx) * 0.012) * intensityMultiplier;
+      });
+
+      // Hover cursor detection for interactive 3D objects
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(scene.children, true);
+      let foundInteractive = false;
+      for (let i = 0; i < hits.length; i++) {
+        if (hits[i].object.userData.interactiveType) {
+          foundInteractive = true;
+          break;
+        }
+      }
+      document.getElementById('canvas-container').style.cursor = foundInteractive
+        ? 'pointer'
+        : isDragging
+        ? 'grabbing'
+        : 'grab';
+
+      renderer.render(scene, camera);
+    }
+
+    // =========================================================================
+    // 6. UI & PORTFOLIO NAVIGATION CONTROLLERS
+    // =========================================================================
+    function openChapter(index) {
+      currentChapter = index;
+      isGrimoireOpen = true;
+
+      const chapter = CHAPTERS[index];
+      document.getElementById('modal-chapter-num').textContent = chapter.folio;
+      document.getElementById('modal-chapter-title').textContent = chapter.title;
+      document.getElementById('grimoire-content').innerHTML = chapter.html;
+      document.getElementById('page-folio-label').textContent = `Page ${index + 1} / ${CHAPTERS.length}`;
+
+      const modal = document.getElementById('grimoire-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // Hide bottom prompt once user opens the book
+      document.getElementById('scene-prompt').style.opacity = '0';
+
+      // Update active nav styling
+      document.querySelectorAll('.chapter-btn').forEach((btn, idx) => {
+        if (idx === index) {
+          btn.classList.add('bg-coffee/70', 'text-goldbright', 'border', 'border-gold/50');
+        } else {
+          btn.classList.remove('bg-coffee/70', 'text-goldbright', 'border', 'border-gold/50');
+        }
+      });
+    }
+
+    function closeGrimoire() {
+      isGrimoireOpen = false;
+      const modal = document.getElementById('grimoire-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+
+      document.querySelectorAll('.chapter-btn').forEach((btn) => {
+        btn.classList.remove('bg-coffee/70', 'text-goldbright', 'border', 'border-gold/50');
+      });
+    }
+
+    function nextChapter() {
+      openChapter((currentChapter + 1) % CHAPTERS.length);
+    }
+
+    function prevChapter() {
+      openChapter((currentChapter - 1 + CHAPTERS.length) % CHAPTERS.length);
+    }
+
+    function cycleFamiliarTip() {
+      currentLoreIndex = (currentLoreIndex + 1) % FAMILIAR_LORE.length;
+      const textEl = document.getElementById('wisp-text');
+      textEl.style.opacity = '0';
+      setTimeout(() => {
+        textEl.textContent = FAMILIAR_LORE[currentLoreIndex];
+        textEl.style.opacity = '1';
+      }, 160);
+    }
+
+    function toggleMagicIntensity() {
+      highMagicMode = !highMagicMode;
+      const btn = document.getElementById('toggle-magic-btn');
+      btn.textContent = highMagicMode ? '✦ Aether: High' : '✦ Aether: Dim';
+      dustParticles.material.opacity = highMagicMode ? 0.82 : 0.3;
+      showToast(highMagicMode ? 'Arcane luminescence amplified.' : 'Candlelight dimmed to ember glow.');
+    }
+
+    function resetCameraView() {
+      dragOffsetX = 0;
+      dragOffsetY = 0;
+      targetCamX = 0;
+      targetCamY = 1.65;
+      showToast('Perspective centered upon the Keeper’s Desk.');
+    }
+
+    function handleSummonSubmit(e) {
+      e.preventDefault();
+      e.target.reset();
+      showToast('✦ Your scroll has been sealed in wax and dispatched to the Keeper!');
+    }
+
+    let toastTimer;
+    function showToast(message) {
+      const toast = document.getElementById('toast-box');
+      toast.textContent = message;
+      toast.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3200);
+    }
+
+    // Start 3D Archive on Window Load
+    window.onload = function () {
+      initScene();
+      animate();
+    };
+  </script>
+</body>
+</html>

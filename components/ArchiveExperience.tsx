@@ -4,14 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Project, Profile } from "@/lib/types";
-import DeskScene from "./book/DeskScene";
-import BookCover from "./book/BookCover";
+import LibraryScene from "./book/LibraryScene";
 import SheaChat from "./shea/SheaChat";
 
 const FlipBook = dynamic(() => import("./book/FlipBook"), { ssr: false });
 const MobileReader = dynamic(() => import("./book/MobileReader"), { ssr: false });
 
 type Stage = "cover" | "opening" | "open";
+
+const BOOK_TITLE = "THE ARCHIVES\nOF WASAM HAIDER";
+const BOOK_SUBTITLE = "A CHRONICLE OF CODE, CREATION & DISCOVERY";
 
 export default function ArchiveExperience({
   projects,
@@ -34,8 +36,12 @@ export default function ArchiveExperience({
   }, []);
 
   const openBook = useCallback(() => {
-    setStage("opening");
+    setStage((s) => (s === "cover" ? "opening" : s));
     window.setTimeout(() => setStage("open"), 1050);
+  }, []);
+
+  const closeBook = useCallback(() => {
+    setStage("cover");
   }, []);
 
   const onProjectViewed = useCallback((projectId: string) => {
@@ -51,26 +57,70 @@ export default function ArchiveExperience({
   const jumpToSlug = useCallback(
     (slug: string) => {
       if (stage !== "open") {
-        setStage("open");
-        // give the book a tick to mount before jumping
-        window.setTimeout(() => jumpRef.current?.(slug), 450);
+        openBook();
+        window.setTimeout(() => jumpRef.current?.(slug), 1200);
       } else {
         jumpRef.current?.(slug);
       }
     },
-    [stage],
+    [stage, openBook],
   );
 
   return (
-    <DeskScene>
+    <div className="relative h-dvh overflow-hidden bg-[var(--walnut-deep)]">
+      {/* The Forgotten Archives — persistent 3D library & hero grimoire.
+          Mounted once; it never unmounts across stage changes so the WebGL
+          context (and its procedurally-generated textures) is built only once. */}
+      <LibraryScene
+        title={BOOK_TITLE}
+        subtitle={BOOK_SUBTITLE}
+        bookOpen={stage !== "cover"}
+        onBookClick={openBook}
+      />
+
+      {/* overall vignette, matches the candlelit study mood */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[5]"
+        style={{
+          background:
+            "radial-gradient(ellipse 120% 100% at 50% 45%, transparent 55%, rgba(14,8,5,0.55) 100%)",
+        }}
+      />
+
       <AnimatePresence mode="wait">
         {stage !== "open" ? (
-          <motion.div className="h-full" key="cover" exit={{ opacity: 0 }} transition={{ duration: 0.45 }}>
-            <BookCover opening={stage === "opening"} onOpen={openBook} />
+          <motion.div
+            key="cover-hint"
+            className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-end px-4 pb-10 sm:pb-14"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
+              className="pointer-events-auto flex flex-col items-center gap-4 text-center"
+            >
+              <p className="font-fell text-sm italic text-[var(--parchment)] opacity-90 sm:text-base">
+                Within these pages lie the works of a maker of software.
+              </p>
+              <button
+                type="button"
+                onClick={openBook}
+                disabled={stage === "opening"}
+                className="btn-wax rounded px-6 py-2.5 text-xs sm:text-sm"
+              >
+                {stage === "opening" ? "Unsealing…" : "Open the Archives"}
+              </button>
+              <p className="font-fell text-[11px] uppercase tracking-[0.3em] text-[var(--gold)] opacity-70">
+                or click the grimoire on the desk
+              </p>
+            </motion.div>
           </motion.div>
         ) : (
           <motion.div
-            className="h-full"
+            className="relative z-10 h-full"
             key="book"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -93,6 +143,15 @@ export default function ArchiveExperience({
                 />
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={closeBook}
+              aria-label="Close the Archives"
+              className="btn-wax fixed left-4 top-4 z-30 rounded px-3.5 py-2 text-[11px] sm:left-6 sm:top-6"
+            >
+              ✕ Seal Tome
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -103,6 +162,6 @@ export default function ArchiveExperience({
           <SheaChat compact={isMobile} onOpenProject={jumpToSlug} />
         </div>
       )}
-    </DeskScene>
+    </div>
   );
 }
