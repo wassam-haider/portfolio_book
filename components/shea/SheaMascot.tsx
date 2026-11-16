@@ -41,7 +41,20 @@ export default function SheaMascot({
       whileHover={{ scale: 1.06 }}
       whileTap={{ scale: 0.96 }}
     >
-      <svg viewBox="0 0 300 330" width={size} height={size * 1.1} fill="none" aria-hidden>
+      {/* Backing halo — without it the cloak's walnut tones blend into the
+          library scene behind it and S.H.E.A. reads as a disembodied head. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          width: size * 1.3,
+          height: size * 1.3,
+          background:
+            "radial-gradient(circle, rgba(255,196,120,0.32) 0%, rgba(56,189,248,0.15) 48%, rgba(10,6,4,0) 76%)",
+          filter: "blur(6px)",
+        }}
+      />
+      <svg viewBox="0 0 300 470" width={size} height={size * 1.567} fill="none" aria-hidden>
         <defs>
           <linearGradient id="shea-cloak" x1="20%" y1="0%" x2="85%" y2="100%">
             <stop offset="0%" stopColor="#624331" />
@@ -128,7 +141,7 @@ export default function SheaMascot({
         {/* floating rune ring beneath S.H.E.A. */}
         <motion.ellipse
           cx="150"
-          cy="312"
+          cy="452"
           rx="54"
           ry="8"
           stroke="var(--gold)"
@@ -188,6 +201,14 @@ export default function SheaMascot({
           fill="url(#shea-cloak)"
           stroke="#22130B"
           strokeWidth="1.6"
+        />
+        {/* rim light so the cloak's silhouette stays legible against dark backdrops */}
+        <path
+          d="M150 68 C 100 68 68 118 72 166 C 76 192 100 204 150 204 C 200 204 224 192 228 166 C 232 118 200 68 150 68 Z"
+          fill="none"
+          stroke="url(#shea-gold)"
+          strokeWidth="1.1"
+          opacity="0.4"
         />
         <path
           d="M80 160 C 79 117 106 76 150 76 C 194 76 221 117 220 160"
@@ -331,8 +352,72 @@ export default function SheaMascot({
           />
         </g>
 
-        {/* mechanical hands + miniature grimoire */}
+        {/* shoulder mantle, librarian cloak and mechanical torso */}
         <g>
+          {/* capelet bridging the hood to the shoulders */}
+          <path
+            d="M150 198 C 108 198 70 208 60 230 C 95 252 205 252 240 230 C 230 208 192 198 150 198 Z"
+            fill="url(#shea-cloak)"
+            stroke="#22130B"
+            strokeWidth="1.6"
+          />
+          <path
+            d="M70 226 C 110 245 190 245 230 226"
+            fill="none"
+            stroke="url(#shea-gold)"
+            strokeWidth="2"
+            strokeDasharray="8 3 2 3"
+            opacity="0.85"
+          />
+
+          {/* flowing cloak panels, flared at the hem */}
+          <path
+            d="M118 232 C 95 270 70 358 55 426 C 80 441 118 437 142 419 C 146 358 148 288 150 234 Z"
+            fill="url(#shea-cloak)"
+            stroke="#22130B"
+            strokeWidth="1.6"
+          />
+          <path
+            d="M182 232 C 205 270 230 358 245 426 C 220 441 182 437 158 419 C 154 358 152 288 150 234 Z"
+            fill="url(#shea-cloak)"
+            stroke="#22130B"
+            strokeWidth="1.6"
+          />
+          <path d="M140 240 C 135 300 130 364 120 418" fill="none" stroke="url(#shea-gold)" strokeWidth="1.8" strokeDasharray="7 3" opacity="0.75" />
+          <path d="M160 240 C 165 300 170 364 180 418" fill="none" stroke="url(#shea-gold)" strokeWidth="1.8" strokeDasharray="7 3" opacity="0.75" />
+
+          {/* brass boots peeking from the hem */}
+          <path d="M122 416 L144 416 C146 431 144 441 133 442 C122 441 120 431 122 416 Z" fill="url(#shea-leather)" stroke="#231208" strokeWidth="1" />
+          <path d="M156 416 L178 416 C180 431 178 441 167 442 C156 441 154 431 156 416 Z" fill="url(#shea-leather)" stroke="#231208" strokeWidth="1" />
+          <path d="M120 438 L146 438 L146 442 L120 442 Z" fill="url(#shea-gold)" opacity="0.8" />
+          <path d="M154 438 L180 438 L180 442 L154 442 Z" fill="url(#shea-gold)" opacity="0.8" />
+
+          {/* brass chest plate */}
+          <path
+            d="M120 236 C 140 228 160 228 180 236 L176 326 C 160 335 140 335 124 326 Z"
+            fill="url(#shea-brass)"
+            stroke="#2A1A0E"
+            strokeWidth="1.4"
+          />
+          <circle cx="132" cy="248" r="2.6" fill="#FFF3C4" />
+          <circle cx="168" cy="248" r="2.6" fill="#FFF3C4" />
+
+          {/* glowing arc core */}
+          <circle cx="150" cy="270" r="12" fill="#1E293B" stroke="url(#shea-gold)" strokeWidth="2.2" />
+          <motion.circle
+            cx="150"
+            cy="270"
+            r="7.5"
+            fill="#38BDF8"
+            filter="url(#shea-crystal-glow)"
+            animate={{ opacity: thinking ? [0.7, 1, 0.7] : [0.85, 1, 0.85] }}
+            transition={{ duration: thinking ? 0.7 : 2.4, repeat: Infinity }}
+          />
+          <circle cx="147" cy="267" r="2" fill="#FFFFFF" opacity="0.85" />
+        </g>
+
+        {/* mechanical hands + miniature grimoire, cradled against the chest */}
+        <g transform="translate(0, 95)">
           {/* glow when thinking/consulting the tome */}
           <motion.ellipse
             cx="146"

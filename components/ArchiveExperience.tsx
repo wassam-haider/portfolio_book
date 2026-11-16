@@ -75,6 +75,7 @@ export default function ArchiveExperience({
         title={BOOK_TITLE}
         subtitle={BOOK_SUBTITLE}
         bookOpen={stage !== "cover"}
+        readerOpen={stage === "open"}
         onBookClick={openBook}
       />
 

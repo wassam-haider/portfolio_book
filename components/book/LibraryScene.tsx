@@ -17,6 +17,8 @@ interface LibrarySceneProps {
   subtitle: string;
   /** When true the front cover swings open and the book settles flat. */
   bookOpen: boolean;
+  /** When true the 2D page reader has taken over; the hero book recedes so it doesn't float as a second, disconnected book behind the pages. */
+  readerOpen: boolean;
   onBookClick: () => void;
 }
 
@@ -605,9 +607,10 @@ function createMetalFiligreeBump(): THREE.CanvasTexture {
  * Component
  * -------------------------------------------------------------------- */
 
-export default function LibraryScene({ title, subtitle, bookOpen, onBookClick }: LibrarySceneProps) {
+export default function LibraryScene({ title, subtitle, bookOpen, readerOpen, onBookClick }: LibrarySceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bookOpenRef = useRef(bookOpen);
+  const readerOpenRef = useRef(readerOpen);
   const onBookClickRef = useRef(onBookClick);
   const titleRef = useRef({ title, subtitle });
 
@@ -616,6 +619,7 @@ export default function LibraryScene({ title, subtitle, bookOpen, onBookClick }:
   // (not the render body) — this one runs after every commit.
   useEffect(() => {
     bookOpenRef.current = bookOpen;
+    readerOpenRef.current = readerOpen;
     onBookClickRef.current = onBookClick;
     titleRef.current = { title, subtitle };
   });
@@ -1235,6 +1239,7 @@ export default function LibraryScene({ title, subtitle, bookOpen, onBookClick }:
     const mouseParallax = { x: 0, y: 0 };
     let currentCoverAngle = 0;
     let hoveringBook = false;
+    let heroVisibility = 1;
 
     const onPointerMove = (e: PointerEvent) => {
       const nx = (e.clientX / window.innerWidth) * 2 - 1;
@@ -1318,6 +1323,13 @@ export default function LibraryScene({ title, subtitle, bookOpen, onBookClick }:
       const targetCoverAngle = open ? -Math.PI * 0.72 : 0;
       currentCoverAngle += (targetCoverAngle - currentCoverAngle) * 0.09;
       frontCoverPivot.rotation.y = currentCoverAngle;
+
+      // Once the 2D page reader takes over, the hero grimoire recedes so it
+      // never reads as a second, disconnected book floating behind the pages.
+      const heroTarget = readerOpenRef.current ? 0 : 1;
+      heroVisibility += (heroTarget - heroVisibility) * 0.08;
+      bookRoot.visible = heroVisibility > 0.015;
+      bookRoot.scale.setScalar(BOOK_SCALE * Math.max(heroVisibility, 0.001));
 
       // Star gem shimmer
       bookGlintLight.position.x = 0.25 + Math.sin(elapsed * 1.8) * 0.15;
