@@ -132,6 +132,7 @@ export default function ArchiveExperience({
                 profile={profile}
                 onProjectViewed={onProjectViewed}
                 jumpRef={jumpRef}
+                onClose={closeBook}
               />
             ) : (
               <div className="flex h-full items-center justify-center px-4 py-6">
@@ -140,18 +141,10 @@ export default function ArchiveExperience({
                   profile={profile}
                   onProjectViewed={onProjectViewed}
                   jumpRef={jumpRef}
+                  onClose={closeBook}
                 />
               </div>
             )}
-
-            <button
-              type="button"
-              onClick={closeBook}
-              aria-label="Close the Archives"
-              className="btn-wax fixed left-4 top-4 z-30 rounded px-3.5 py-2 text-[11px] sm:left-6 sm:top-6"
-            >
-              ✕ Seal Tome
-            </button>
           </motion.div>
         )}
       </AnimatePresence>

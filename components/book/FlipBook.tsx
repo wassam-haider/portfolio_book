@@ -27,9 +27,11 @@ interface FlipBookProps {
   onProjectViewed: (projectId: string) => void;
   /** Parent can set this ref to jump to a project slug (used by S.H.E.A.). */
   jumpRef: React.MutableRefObject<((slug: string) => void) | null>;
+  /** Seals the tome and returns to the 3D cover. */
+  onClose: () => void;
 }
 
-export default function FlipBook({ projects, profile, onProjectViewed, jumpRef }: FlipBookProps) {
+export default function FlipBook({ projects, profile, onProjectViewed, jumpRef, onClose }: FlipBookProps) {
   const bookRef = useRef<PageFlipApi | null>(null);
   const [page, setPage] = useState(0);
 
@@ -288,6 +290,14 @@ export default function FlipBook({ projects, profile, onProjectViewed, jumpRef }
           aria-label="Next pages"
         >
           Next →
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="btn-wax rounded px-4 py-2 text-xs"
+          aria-label="Seal the tome"
+        >
+          ✕ Seal Tome
         </button>
       </div>
     </div>

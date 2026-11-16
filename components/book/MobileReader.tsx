@@ -23,6 +23,8 @@ interface MobileReaderProps {
   profile: Profile | null;
   onProjectViewed: (projectId: string) => void;
   jumpRef: React.MutableRefObject<((slug: string) => void) | null>;
+  /** Seals the tome and returns to the 3D cover. */
+  onClose: () => void;
 }
 
 const SWIPE_THRESHOLD = 70;
@@ -46,6 +48,7 @@ export default function MobileReader({
   profile,
   onProjectViewed,
   jumpRef,
+  onClose,
 }: MobileReaderProps) {
   const pages = useMemo<MobilePage[]>(
     () => [
@@ -99,20 +102,31 @@ export default function MobileReader({
   return (
     <div className="flex min-h-dvh flex-col px-3 pb-24 pt-4">
       {/* top bar */}
-      <div className="mb-3 flex items-center justify-between px-1">
+      <div className="mb-3 flex items-center justify-between gap-2 px-1">
         <button
           type="button"
           onClick={() => setTocOpen(true)}
-          className="btn-wax rounded px-3 py-1.5 text-[11px]"
+          aria-label="Open the index of chronicles"
+          className="btn-wax shrink-0 rounded px-3 py-1.5 text-[11px]"
         >
-          ☰ Index
+          ☰
         </button>
-        <p className="font-display max-w-[55%] truncate text-xs tracking-[0.12em] text-[var(--gold-bright)]">
+        <p className="font-display min-w-0 flex-1 truncate text-center text-xs tracking-[0.12em] text-[var(--gold-bright)]">
           {label}
         </p>
-        <p className="font-fell text-[11px] italic text-[var(--parchment)] opacity-80">
-          {pageIndex + 1} / {pages.length}
-        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <p className="font-fell whitespace-nowrap text-[11px] italic text-[var(--parchment)] opacity-80">
+            {pageIndex + 1}/{pages.length}
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Seal the tome"
+            className="btn-wax rounded px-3 py-1.5 text-[11px]"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* the page */}
