@@ -1,10 +1,10 @@
-export const OWNER_NAME = "Wasam Haider";
+export const OWNER_NAME = "Wassam Haider";
 
 export const SHEA_GREETING =
   "Greetings, traveler! I am S.H.E.A., the keeper of these archives. Would you like to explore a project, discover the technologies behind my master's creations, or learn about the developer himself?";
 
 export const SUGGESTED_QUESTIONS = [
-  "Tell me about Wasam.",
+  "Tell me about Wassam.",
   "What projects has he developed?",
   "Explain his AI and machine learning projects.",
   "What technologies does he work with?",

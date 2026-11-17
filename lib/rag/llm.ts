@@ -35,7 +35,7 @@ export async function generateReply(system: string, history: ChatTurn[]): Promis
       Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
       // Optional but recommended by OpenRouter for attribution/analytics.
       "HTTP-Referer": process.env.SITE_URL || "http://localhost:3000",
-      "X-Title": "The Archives of Wasam Haider",
+      "X-Title": "The Archives of Wassam Haider",
     },
     body: JSON.stringify({
       model,

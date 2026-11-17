@@ -148,7 +148,7 @@ export default function FlipBook({ projects, profile, onProjectViewed, jumpRef, 
               </p>
               <div className="gold-rule mt-5 w-36" />
               <p className="font-book mt-5 max-w-[34ch] text-[15px] italic leading-relaxed text-[var(--ink-soft)]">
-                Herein are recorded the projects, experiments and research of Wasam Haider —
+                Herein are recorded the projects, experiments and research of Wassam Haider —
                 each chronicle laid upon its own spread of pages.
               </p>
               <p className="font-fell mt-6 text-xs uppercase tracking-[0.3em] text-[var(--coffee)]">

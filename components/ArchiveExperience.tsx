@@ -13,7 +13,7 @@ const MobileReader = dynamic(() => import("./book/MobileReader"), { ssr: false }
 
 type Stage = "cover" | "opening" | "open";
 
-const BOOK_TITLE = "THE ARCHIVES\nOF WASAM HAIDER";
+const BOOK_TITLE = "THE ARCHIVES\nOF WASSAM HAIDER";
 const BOOK_SUBTITLE = "A CHRONICLE OF CODE, CREATION & DISCOVERY";
 
 export default function ArchiveExperience({
@@ -105,7 +105,7 @@ export default function ArchiveExperience({
               className="pointer-events-auto flex flex-col items-center gap-4 text-center"
             >
               <p className="font-fell text-sm italic text-[var(--parchment)] opacity-90 sm:text-base">
-                Within these pages lie the works of Wasam Haider.
+                Within these pages lie the works of Wassam Haider.
               </p>
               <button
                 type="button"

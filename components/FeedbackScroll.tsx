@@ -73,7 +73,7 @@ export default function FeedbackScroll({ compact }: { compact?: boolean }) {
             <div className="flex items-center justify-between border-b border-[rgba(180,154,98,0.3)] bg-black/30 px-4 py-2.5">
               <div>
                 <p className="font-display text-sm font-semibold tracking-[0.12em] text-[var(--gold-bright)]">
-                  A Blank Scroll
+                  Golden Scroll of Feedback
                 </p>
                 <p className="font-fell text-[11px] italic text-[var(--parchment)] opacity-80">
                   Leave a note in the margins

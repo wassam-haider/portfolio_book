@@ -33,7 +33,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "The Archives of Wasam Haider",
+  title: "The Archives of Wassam Haider",
   description:
     "A chronicle of code, creation & discovery — an interactive ancient book of software projects, guarded by S.H.E.A., the keeper of the archives.",
 };

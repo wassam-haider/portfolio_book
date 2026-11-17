@@ -144,7 +144,7 @@ async function main() {
     create: {
       id: "profile",
       introduction:
-        "I am Wasam Haider, a software developer who enjoys building things end to end — from backend systems and AI integrations to the interfaces people actually touch. (Placeholder introduction: edit me in the admin dashboard.)",
+        "I am Wassam Haider, a software developer who enjoys building things end to end — from backend systems and AI integrations to the interfaces people actually touch. (Placeholder introduction: edit me in the admin dashboard.)",
       education: "Add your education details in the admin dashboard.",
       skills: JSON.stringify([
         { group: "Languages", items: ["TypeScript", "Python"] },

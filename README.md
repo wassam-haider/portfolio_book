@@ -1,4 +1,4 @@
-# The Archives of Wasam Haider
+# The Archives of Wassam Haider
 
 A fantasy-themed interactive portfolio: visitors open an ancient leather tome on a
 candle-lit desk, and every project occupies its own two-page spread with a realistic
