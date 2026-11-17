@@ -105,7 +105,7 @@ export default function ArchiveExperience({
               className="pointer-events-auto flex flex-col items-center gap-4 text-center"
             >
               <p className="font-fell text-sm italic text-[var(--parchment)] opacity-90 sm:text-base">
-                Within these pages lie the works of a maker of software.
+                Within these pages lie the works of Wasam Haider.
               </p>
               <button
                 type="button"
