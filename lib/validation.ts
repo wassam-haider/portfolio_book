@@ -96,3 +96,8 @@ export const chatInputSchema = z.object({
   sessionId: z.string().min(8).max(100),
   message: z.string().min(1).max(2000),
 });
+
+export const feedbackInputSchema = z.object({
+  experienceAnswer: z.string().trim().max(2000).default(""),
+  suggestionAnswer: z.string().trim().max(2000).default(""),
+});

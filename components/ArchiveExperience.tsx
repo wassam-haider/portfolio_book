@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { Project, Profile } from "@/lib/types";
 import LibraryScene from "./book/LibraryScene";
 import SheaChat from "./shea/SheaChat";
+import FeedbackScroll from "./FeedbackScroll";
 
 const FlipBook = dynamic(() => import("./book/FlipBook"), { ssr: false });
 const MobileReader = dynamic(() => import("./book/MobileReader"), { ssr: false });
@@ -156,6 +157,9 @@ export default function ArchiveExperience({
           <SheaChat compact={isMobile} onOpenProject={jumpToSlug} />
         </div>
       )}
+
+      {/* A blank scroll — visitors can leave a note, opposite S.H.E.A. */}
+      {isMobile !== null && <FeedbackScroll compact={isMobile} />}
     </div>
   );
 }

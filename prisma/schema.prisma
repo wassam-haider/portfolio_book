@@ -97,3 +97,12 @@ model IndexState {
   docCount      Int       @default(0)
   lastIndexedAt DateTime?
 }
+
+model FeedbackEntry {
+  id                 String   @id @default(cuid())
+  experienceAnswer   String   @default("")
+  suggestionAnswer   String   @default("")
+  createdAt          DateTime @default(now())
+
+  @@index([createdAt])
+}
