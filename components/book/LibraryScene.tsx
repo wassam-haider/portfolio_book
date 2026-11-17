@@ -628,9 +628,29 @@ export default function LibraryScene({ title, subtitle, bookOpen, readerOpen, on
     const container = containerRef.current;
     if (!container) return;
 
+    // Narrow/portrait screens (phones) get a cropped, performance-heavy scene
+    // if treated identically to desktop: a PerspectiveCamera's horizontal FOV
+    // shrinks with aspect while its vertical FOV stays fixed, so the fixed
+    // -distance framing tuned for wide desktop windows leaves far less of the
+    // library visible on a tall, narrow phone screen — the book (a fixed
+    // world-space size) then fills and overflows that narrower horizontal
+    // slice instead of sitting inside it. Pulling the camera back as aspect
+    // narrows keeps the whole desk + shelves in frame instead of just the
+    // book. The 1.6 / 0.46 pair are a rough "typical laptop" vs "typical
+    // phone portrait" aspect — ratios in between (tablets) lerp smoothly.
+    const computeCameraDistance = (aspect: number) => {
+      const desktopAspect = 1.6;
+      const desktopZ = 4.4;
+      const narrowAspect = 0.46;
+      const narrowZ = 6.6;
+      const t = Math.min(1, Math.max(0, (desktopAspect - aspect) / (desktopAspect - narrowAspect)));
+      return desktopZ + (narrowZ - desktopZ) * t;
+    };
+    const isSmallScreen = window.innerWidth < 768;
+
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({ antialias: !isSmallScreen, powerPreference: "high-performance" });
     } catch {
       return; // no WebGL — CSS backdrop behind the canvas stays visible
     }
@@ -639,12 +659,18 @@ export default function LibraryScene({ title, subtitle, bookOpen, readerOpen, on
     scene.background = new THREE.Color("#120a06");
     scene.fog = new THREE.FogExp2("#160d08", 0.048);
 
-    const camera = new THREE.PerspectiveCamera(46, container.clientWidth / container.clientHeight, 0.1, 80);
-    camera.position.set(0, 1.65, 4.4);
+    const initialAspect = container.clientWidth / container.clientHeight;
+    const camera = new THREE.PerspectiveCamera(46, initialAspect, 0.1, 80);
+    camera.position.set(0, 1.65, computeCameraDistance(initialAspect));
 
     renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isSmallScreen ? 1 : 2));
+    // Real-time shadows (especially the candle's point-light cubemap shadow)
+    // are the single biggest GPU cost in this scene — disabling them on
+    // phones is what actually fixes the sluggish parallax/breathing
+    // animation there; everything else in the render loop is cheap per-frame
+    // math, not the bottleneck.
+    renderer.shadowMap.enabled = !isSmallScreen;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
@@ -1281,7 +1307,9 @@ export default function LibraryScene({ title, subtitle, bookOpen, readerOpen, on
 
     const onResize = () => {
       if (!container) return;
-      camera.aspect = container.clientWidth / container.clientHeight;
+      const aspect = container.clientWidth / container.clientHeight;
+      camera.aspect = aspect;
+      camera.position.z = computeCameraDistance(aspect);
       camera.updateProjectionMatrix();
       renderer.setSize(container.clientWidth, container.clientHeight);
     };
