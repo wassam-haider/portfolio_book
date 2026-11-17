@@ -148,7 +148,26 @@ export default function MobileReader({
               else if (info.offset.x > SWIPE_THRESHOLD) go(pageIndex - 1, -1);
             }}
             className="page-paper absolute inset-0 overflow-hidden rounded-sm shadow-[0_14px_40px_rgba(0,0,0,0.7)]"
-            style={{ transformOrigin: direction >= 0 ? "left center" : "right center" }}
+            style={{
+              // .page-paper's own unlayered `position: relative` (globals.css)
+              // always wins over Tailwind's layered `.absolute` utility,
+              // whatever order the classes appear in — cascade layers beat
+              // specificity/order. That left this card never actually
+              // absolutely positioned, so `.page-scroll` inside it had no
+              // definite height to clip against: scrollHeight == clientHeight
+              // always, i.e. nothing to scroll, and the overflow just sat
+              // behind the fixed bottom nav instead. Only an inline style can
+              // out-rank an unlayered rule, so position is set here instead
+              // of relying on the className.
+              position: "absolute",
+              transformOrigin: direction >= 0 ? "left center" : "right center",
+              // drag="x" alone can still swallow vertical touch gestures on
+              // some mobile browsers before Framer Motion's own touch-action
+              // handling kicks in — pan-y explicitly reserves vertical
+              // panning for native scroll while horizontal drag stays
+              // captured for the page-turn gesture.
+              touchAction: "pan-y",
+            }}
           >
             <div className="page-scroll h-full px-5 py-5">
               <MobilePageBody page={page} profile={profile} totalProjects={projects.length} />

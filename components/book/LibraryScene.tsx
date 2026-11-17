@@ -1323,6 +1323,17 @@ export default function LibraryScene({ title, subtitle, bookOpen, readerOpen, on
     const animate = (timestamp?: number) => {
       if (disposed) return;
       rafId = requestAnimationFrame(animate);
+
+      // Once the reader (FlipBook/MobileReader) covers the scene and the
+      // hero grimoire has fully faded out, this canvas is hidden behind
+      // opaque UI — stop rendering it entirely so its draw calls stop
+      // competing with the reader's own page-turn animation for mobile GPU
+      // budget. That contention (not the page-turn logic itself) was why
+      // turning pages read as smooth on a laptop GPU but janky on a phone.
+      if (readerOpenRef.current && heroVisibility <= 0.02) {
+        return;
+      }
+
       timer.update(timestamp);
       const elapsed = timer.getElapsed();
 
